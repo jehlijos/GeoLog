@@ -203,17 +203,54 @@ def main():
     label = Label(root2, text="Přibliž na kraj:", font=desc_font)
     label.pack(pady=1)
 
-    combo_var = tk.StringVar(root2)
-    combo_var.set("--vyber kraj--")  # Default text in the combobox
+    combo_var_kraje = tk.StringVar(root2)
+    combo_var_kraje.set("--vyber kraj--")  # Default text in the combobox
 
     kraje_nazvy = kraje_shp['nazev'].unique()
     kraje_nazvy = ['Celá ČR'] + list(kraje_nazvy)
 
     # Enclose each 'nazev' value in double quotes
     quoted_kraje_nazvy = ['{}'.format(nazev) for nazev in kraje_nazvy]
-    combo_box = ttk.Combobox(root2, textvariable=combo_var, values=quoted_kraje_nazvy)
-    combo_box.pack(pady=20)
-    combo_box.bind("<<ComboboxSelected>>", update_plot)
+    combo_box_kraje = ttk.Combobox(root2, textvariable=combo_var_kraje, values=quoted_kraje_nazvy)
+    combo_box_kraje.pack(pady=20)
+
+    # okresy selection (initially hidden)
+    combo_var_okresy = tk.StringVar(root2)
+    combo_var_okresy.set("--vyber okres--")  # Default text in the combobox
+
+    okresy_nazvy = []  # You need to provide the actual list of okresy names
+
+    quoted_okresy_nazvy = ['{}'.format(nazev) for nazev in okresy_nazvy]
+    combo_box_okresy = ttk.Combobox(root2, textvariable=combo_var_okresy, values=quoted_okresy_nazvy, state="disabled")
+    combo_box_okresy.pack(pady=20)
+
+    def update_plot(event):
+        selected_nazev = combo_var_kraje.get()
+
+        # Check if "Celá ČR" is selected
+        if selected_nazev == "Celá ČR":
+            # Destroy previous canvas widget
+            for widget in root.winfo_children():
+                if isinstance(widget, tk.Widget):
+                    widget.destroy()
+            plot_geopackage(root, gpkg_paths[::-1], loading_window)
+            root.update()
+
+            # Disable and reset the second combobox
+            combo_box_okresy.set("--vyber okres--")
+            combo_box_okresy['state'] = 'disabled'
+        else:
+            # Enable the second combobox
+            combo_box_okresy['state'] = 'readonly'
+
+            # Continue with the previous logic for other selections
+            for widget in root.winfo_children():
+                if isinstance(widget, tk.Widget):
+                    widget.destroy()
+            plot_geopackage_selection(root, gpkg_paths[::-1], loading_window, selected_nazev)
+
+    # Bind the event to update_plot function for kraje combobox
+    combo_box_kraje.bind("<<ComboboxSelected>>", update_plot)
 
     root2.mainloop()
     root.mainloop()
