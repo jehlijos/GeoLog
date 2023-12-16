@@ -7,6 +7,15 @@ from screeninfo import get_monitors
 
 
 def print_file_contents(filename):
+    """
+    Print the contents of the file to the console.
+
+    Parameters:
+    filename (str): The path to the file.
+
+    Returns:
+    None
+    """
     try:
         # Open the file in read mode
         with open(filename, 'r') as file:
@@ -44,6 +53,15 @@ def get_screen_resolution() -> tuple[int, int] | tuple[None, None]:
 
 
 def loading_screen(root):
+    """
+    Creates a loading screen with a progress bar.
+
+    Parameters:
+    root (tkinter.Tk): The root Tkinter window.
+
+    Returns:
+    tkinter.Toplevel: The loading window.
+    """
     loading_window = Toplevel(root)
     loading_window.title("NAČÍTÁNÍ...")
     loading_window.geometry("500x200")
@@ -98,6 +116,19 @@ def plot_geopackage(root, gpkg_paths, loading_window):
 
 
 def plot_geopackage_selection(root, gpkg_paths, loading_window, selected_nazev=None):
+    """
+    Plot GeoPackage files on a Matplotlib figure embedded in a Tkinter window.
+
+    Parameters:
+    root (tkinter.Tk): The root Tkinter window.
+    gpkg_paths (list): A list of tuples containing the GeoPackage file paths and their corresponding colors.
+    loading_window (tkinter.Toplevel): The loading window to be destroyed before plotting.
+    selected_nazev (str): The selected nazev from the combobox.
+
+    Returns:
+    None
+    """
+    # Create a Matplotlib figure and axis
     loading_window = loading_screen(root)
     root.update()
 
@@ -157,15 +188,16 @@ def main():
 
     # Specify the paths to your GeoPackage files and their corresponding colors
     kraje_shp_path = "geodata/kraje.shp"
+    okresy_shp_path = "geodata/okresy.shp"
     gpkg_paths = [
         (kraje_shp_path, 'blue'),
-        ("geodata/okresy.shp", 'green'),
+        (okresy_shp_path, 'green'),
         ("geodata/obce_generalized.shp", 'gray')
     ]
 
     # Read GeoPackage file using GeoPandas
     kraje_shp = gpd.read_file(kraje_shp_path)
-
+    okresy_shp = gpd.read_file(okresy_shp_path)
     # Display loading screen
     loading_window = loading_screen(root)
     root.update()
@@ -178,28 +210,10 @@ def main():
     root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.45))}")
     root2.title("GeoLog - nastavení")
     root2.iconbitmap("files/ico.ico")
-
-    def update_plot(event):
-        selected_nazev = combo_var.get()
-
-        # Check if "Celá ČR" is selected
-        if selected_nazev == "Celá ČR":
-            # Destroy previous canvas widget
-            for widget in root.winfo_children():
-                if isinstance(widget, tk.Widget):
-                    widget.destroy()
-            plot_geopackage(root, gpkg_paths[::-1], loading_window)
-            root.update()
-        else:
-            # Continue with the previous logic for other selections
-            for widget in root.winfo_children():
-                if isinstance(widget, tk.Widget):
-                    widget.destroy()
-            plot_geopackage_selection(root, gpkg_paths[::-1], loading_window, selected_nazev)
-            root.update()
+    root2.resizable(False, False)
 
     # kraj selection
-    desc_font = ("Raleway", 10)
+    desc_font = ("Raleway", 10)  # Specify the font family and size for the description
     label = Label(root2, text="Přibliž na kraj:", font=desc_font)
     label.pack(pady=1)
 
@@ -215,20 +229,32 @@ def main():
     combo_box_kraje.pack(pady=20)
 
     # okresy selection (initially hidden)
+    label = Label(root2, text="Přibliž na okres:", font=desc_font)
+    label.pack(pady=1)  # show description
+
     combo_var_okresy = tk.StringVar(root2)
     combo_var_okresy.set("--vyber okres--")  # Default text in the combobox
 
-    okresy_nazvy = []  # You need to provide the actual list of okresy names
+    okresy_nazvy = ["Celý kraj"]  # You need to provide the actual list of okresy names
 
     quoted_okresy_nazvy = ['{}'.format(nazev) for nazev in okresy_nazvy]
     combo_box_okresy = ttk.Combobox(root2, textvariable=combo_var_okresy, values=quoted_okresy_nazvy, state="disabled")
     combo_box_okresy.pack(pady=20)
 
+    selected_nazev_kraj = None
+
     def update_plot(event):
-        selected_nazev = combo_var_kraje.get()
+        """
+        Update the plot based on the selected value in the combobox.
+        Update the second combobox based on the selected value in the first combobox.
+        """
+        global selected_nazev_kraj
+        global okresy_nazvy
+
+        selected_nazev_kraj = combo_var_kraje.get()
 
         # Check if "Celá ČR" is selected
-        if selected_nazev == "Celá ČR":
+        if selected_nazev_kraj == "Celá ČR":
             # Destroy previous canvas widget
             for widget in root.winfo_children():
                 if isinstance(widget, tk.Widget):
@@ -239,6 +265,9 @@ def main():
             # Disable and reset the second combobox
             combo_box_okresy.set("--vyber okres--")
             combo_box_okresy['state'] = 'disabled'
+
+            # Set okresy_nazvy to None when "Celá ČR" is selected
+            okresy_nazvy = None
         else:
             # Enable the second combobox
             combo_box_okresy['state'] = 'readonly'
@@ -247,11 +276,19 @@ def main():
             for widget in root.winfo_children():
                 if isinstance(widget, tk.Widget):
                     widget.destroy()
-            plot_geopackage_selection(root, gpkg_paths[::-1], loading_window, selected_nazev)
+            okresy_nazvy = list(okresy_shp[okresy_shp['Název_kra'] == selected_nazev_kraj]['Název_okr'])
+            okresy_nazvy.append("Celý kraj")
+            plot_geopackage_selection(root, gpkg_paths[::-1], loading_window, selected_nazev_kraj)
+            combo_box_okresy['values'] = okresy_nazvy
+            combo_box_okresy.set('--vyber okres--')  # Reset the selection
+            root.update()
+
+    # def update_plot_okresy(KRAJ):
 
     # Bind the event to update_plot function for kraje combobox
     combo_box_kraje.bind("<<ComboboxSelected>>", update_plot)
 
+    combo_box_okresy.bind("<<ComboboxSelected>>")  # update_plot_okresy(selected_nazev_kraj))
     root2.mainloop()
     root.mainloop()
 
