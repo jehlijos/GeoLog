@@ -1,10 +1,12 @@
+import sys
 import tkinter as tk
 from tkinter import Toplevel, Label, ttk
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from screeninfo import get_monitors
-from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+import sqlite3
+import os
 
 
 # this app works with names of Czech teritorial units.
@@ -190,6 +192,36 @@ def main():
     root.iconbitmap("files/ico.ico")
     root.update()
 
+    def quit_app():
+        """
+        Quit the application upon clicking on X.
+        """
+        cursor.close()
+        root.quit()
+        root2.quit()
+        sys.exit()
+
+    # Declare roots as a global variable so that they can be destroyed later
+    global root3
+    root3 = None
+    global adduserpanelroot
+    adduserpanelroot = None
+    global removeuserpanelroot
+    removeuserpanelroot = None
+
+    # Declare combo_var and user as a global variable so that it can be accessed in other functions
+    global combo_var_user
+    global user
+    global combo_var_REMuser
+    global user_to_remove
+    combo_var_REMuser = tk.StringVar()
+
+    user = "---"
+    # Connect to the SQLite database
+    DB_directory = 'database'
+    conn = sqlite3.connect(os.path.join(DB_directory, 'users.db'))
+    cursor = conn.cursor()
+
     # Specify the paths to your GeoPackage files and their corresponding colors
     kraje_shp_path = "geodata/kraje.shp"
     okresy_shp_path = "geodata/okresy.shp"
@@ -372,6 +404,270 @@ def main():
     combo_box_kraje.bind("<<ComboboxSelected>>", update_plot)
 
     combo_box_okresy.bind("<<ComboboxSelected>>", update_plot_okres)
+
+    def add_user():
+        """
+        Create a new table in the database with the name of the user.
+        global user is set to the name of the user.
+        close the adduserpanelroot and root3 window.
+        enable buttons 1,2,3
+        """
+        global user
+        global entryuser
+
+        username = str(entryuser.get())
+        # Check if username is empty
+        if not username or ' ' in username:
+            print("Neplatné jméno, nepoužívej mezery")
+            labelusererr = Label(adduserpanelroot, text="Neplatné jméno, nepoužívej mezery", font=desc_font, fg="red")
+            labelusererr.pack(pady=1)
+            return
+
+            # Check if username contains only alphanumeric characters
+        if not username.isalnum():
+            print("Neplatné jméno, nepoužívej mezery")
+            labelusererr = Label(adduserpanelroot, text="Neplatné jméno, nepoužívej mezery", font=desc_font, fg="red")
+            labelusererr.pack(pady=1)
+            return
+
+        print("uzivatel vytvoren: " + username)
+        cursor.execute("CREATE TABLE IF NOT EXISTS " + username + " (id INTEGER PRIMARY KEY, obecID INTEGER)")
+        user = username
+        user_label.config(text="Uživatel:  " + user)
+
+        button1.config(state="normal")
+        button2.config(state="normal")
+        button3.config(state="normal")
+
+        root3.destroy()
+        adduserpanelroot.destroy()
+
+    def adduserpanel():
+        """
+        Create a new window with a entry to enter a new user.
+        """
+        global adduserpanelroot
+        global entryuser
+
+        # Check if root already exists and destroy it if it does remove it
+        if adduserpanelroot is not None:
+            try:
+                adduserpanelroot.destroy()
+            except:
+                pass
+        adduserpanelroot = tk.Tk()
+        adduserpanelroot.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
+        adduserpanelroot.title("GeoLog - nový uživatel")
+        adduserpanelroot.iconbitmap("files/ico.ico")
+        adduserpanelroot.update()
+
+        labeluser = Label(adduserpanelroot, text="Vlož jméno nového uživatele:", font=desc_font)
+        labeluser.pack(pady=1)
+
+        entryuser = tk.Entry(adduserpanelroot, width=30)
+        entryuser.pack(pady=20)
+
+        button_adduser = tk.Button(adduserpanelroot, text="PŘIDAT", command=add_user, bg="light green", padx=10,
+                                   pady=5,
+                                   width=15)
+        button_adduser.pack(padx=5)
+
+        adduserpanelroot.protocol("WM_DELETE_WINDOW",
+                                  adduserpanelroot.destroy)  # Destroy root3 when the user closes the window
+
+    def existing_user_selected(event):
+        """
+        Update the global user variable and enable buttons 1,2,3.
+        This function is bound to the <<ComboboxSelected>> event.
+        """
+        global user
+
+        user = combo_var_user.get()
+        user_label.config(text="Uživatel:  " + user)
+        print("uzivatel zmenen: " + user)
+
+        # Enable buttons 1,2,3
+        button1.config(state="normal")
+        button2.config(state="normal")
+        button3.config(state="normal")
+
+        root2.update()
+        root3.destroy()
+
+    def removeuser():
+        """
+        Remove the selected user from the database upon clicking the button.
+        """
+        global user_to_remove
+        global user
+
+        cursor.execute("DROP TABLE " + user_to_remove)
+        print("uzivatel smazan: " + user_to_remove)
+        user = "---"
+        user_label.config(text="Uživatel:  " + user)
+
+        button1.config(state="disabled")
+        button2.config(state="disabled")
+        button3.config(state="disabled")
+
+        root3.destroy()
+        removeuserpanelroot.destroy()
+
+    def update_REMuser_var(event=None):
+        """
+        Update the global user_to_remove variable.
+        This function is bound to the <<ComboboxSelected>> event.
+        This will update the value to be removed, but will not remove it.
+        Pushing the red button will remove the user.
+        """
+        global combo_var_REMuser
+        global user_to_remove
+        user_to_remove = combo_var_REMuser.get()
+
+    def removeuserpanel():
+        """
+        Create a new window with a combobox to select a user.
+        Selecting a user will update the global user_to_remove variable.
+        Pushing the red button will remove the user.
+        """
+        global removeuserpanelroot
+        global entryuser
+        global combo_var_REMuser
+
+        # Check if root already exists and destroy it if it does remove it
+        if removeuserpanelroot is not None:
+            try:
+                removeuserpanelroot.destroy()
+            except:
+                pass
+        # Window creation
+        removeuserpanelroot = tk.Tk()
+        removeuserpanelroot.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
+        removeuserpanelroot.title("GeoLog - vymaž uživatele")
+        removeuserpanelroot.iconbitmap("files/ico.ico")
+        removeuserpanelroot.update()
+        # Text
+        labeluser = Label(removeuserpanelroot, text="Vyber uživatele pro smazání:", font=desc_font)
+        labeluser.pack(pady=1)
+
+        # Combobox
+        combo_var_REMuser = tk.StringVar(removeuserpanelroot)
+        combo_var_REMuser.set("--vyber uživatele--")  # Default text in the combobox
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        rem_tables = cursor.fetchall()  # Returns a list of tables in the database = users
+
+        combo_box_REMuser = ttk.Combobox(removeuserpanelroot, textvariable=combo_var_REMuser, values=rem_tables)
+        combo_box_REMuser.pack(pady=20)
+        combo_box_REMuser.bind("<<ComboboxSelected>>", update_REMuser_var)
+
+        # Text
+        labeluser = Label(removeuserpanelroot, text="STISKNUTÍM TLAČÍTKA NÍŽE NEVRATNĚ \n SMAŽETE UŽIVATELSKÁ DATA",
+                          font=desc_font)
+        labeluser.pack(pady=1)
+
+        # Button
+        button_removeuser = tk.Button(removeuserpanelroot, text="Odeber uživatele", command=removeuser, bg="red",
+                                      padx=10,
+                                      pady=5,
+                                      fg="white",
+                                      width=15)
+        button_removeuser.pack(padx=5)
+
+        removeuserpanelroot.protocol("WM_DELETE_WINDOW", removeuserpanelroot.destroy)
+        # Destroy removeuserpanelroot when the user closes the window
+
+    def userpanel():
+        """
+        Create a new window with a combobox to select a user.
+        """
+        global root3
+        global combo_var_user  # Add this line to declare combo_var_user as a global variable
+
+        # Check if root3 already exists and destroy it if it does remove it
+        if root3 is not None:
+            try:
+                root3.destroy()
+            except:
+                pass
+
+        # Root3 is the window with the combobox to select a user
+        root3 = tk.Tk()
+        root3.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
+        root3.title("GeoLog - uživatelé")
+        root3.iconbitmap("files/ico.ico")
+        root3.update()
+
+        labeluser = Label(root3, text="Vyber uživatele:", font=desc_font)
+        labeluser.pack(pady=1)
+
+        combo_var_user = tk.StringVar(root3)
+        combo_var_user.set("--vyber uživatele--")  # Default text in the combobox
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = cursor.fetchall()  # Returns a list of tables in the database = users
+
+        combo_box_user = ttk.Combobox(root3, textvariable=combo_var_user, values=tables)
+        combo_box_user.pack(pady=20)
+
+        combo_box_user.bind("<<ComboboxSelected>>", existing_user_selected)  # Bind the event to update user
+
+        # Buttons
+        button_adduser = tk.Button(root3, text="Přidej uživatele", command=adduserpanel, bg="light green", padx=10,
+                                   pady=5,
+                                   width=15)
+
+        button_removeuser = tk.Button(root3, text="Odeber uživatele", command=removeuserpanel, bg="orange", padx=10,
+                                      pady=5,
+                                      width=15)
+
+        button_adduser.pack(padx=5)
+        button_removeuser.pack(padx=5)
+
+        root3.protocol("WM_DELETE_WINDOW", root3.destroy)  # Destroy root3 when the user closes the window
+
+    # Separator between buttons
+    separator = ttk.Separator(root2, orient="horizontal")
+    separator.pack(fill="x", pady=10)
+
+    # Button to open user panel
+    user_button = ttk.Button(root2, text="Vyber uživatele", command=userpanel)
+    user_button.pack()
+
+    user_label = ttk.Label(root2, text="Uživatel:  " + user)
+    user_label.pack()
+
+    # Separator between buttons
+    separator = ttk.Separator(root2, orient="horizontal")
+    separator.pack(fill="x", pady=10)
+
+    def add_obec_window():
+        print("add obec window soon to be added")
+
+    def stopar_window():
+        print("stopar window soon to be added")
+
+    def remove_obec_window():
+        print("remove obece window soon to be added")
+
+    # Create the first red button
+    button1 = tk.Button(root2, text="Přidej obec", command=add_obec_window, bg="green", padx=10, pady=5,
+                        width=15, fg="white", state="disabled")
+
+    # Create the second light green button
+    button2 = tk.Button(root2, text="Načti stopaře", command=stopar_window, bg="light green", padx=10,
+                        pady=5, width=15, state="disabled")
+
+    # Create the third green button
+    button3 = tk.Button(root2, text="Odeber obec", command=remove_obec_window, bg="orange", padx=10, pady=5,
+                        width=15, state="disabled")
+
+    button1.pack(padx=5)
+    button2.pack(padx=5)
+    button3.pack(padx=5)
+
+    root2.protocol("WM_DELETE_WINDOW", quit_app)
+    root.protocol("WM_DELETE_WINDOW", quit_app)
     root2.mainloop()
     root.mainloop()
 
