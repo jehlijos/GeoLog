@@ -4,7 +4,11 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from screeninfo import get_monitors
+from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 
+
+# this app works with names of Czech teritorial units.
+# Kraj is a region, okres is a district, obec is a municipality
 
 def print_file_contents(filename):
     """
@@ -194,6 +198,10 @@ def main():
         (okresy_shp_path, 'green'),
         ("geodata/obce_generalized.shp", 'gray')
     ]
+    gpkg_paths_no_kraje = [
+        (okresy_shp_path, 'green'),
+        ("geodata/obce_generalized.shp", 'gray')
+    ]
 
     # Read GeoPackage file using GeoPandas
     kraje_shp = gpd.read_file(kraje_shp_path)
@@ -277,18 +285,93 @@ def main():
                 if isinstance(widget, tk.Widget):
                     widget.destroy()
             okresy_nazvy = list(okresy_shp[okresy_shp['Název_kra'] == selected_nazev_kraj]['Název_okr'])
-            okresy_nazvy.append("Celý kraj")
             plot_geopackage_selection(root, gpkg_paths[::-1], loading_window, selected_nazev_kraj)
             combo_box_okresy['values'] = okresy_nazvy
             combo_box_okresy.set('--vyber okres--')  # Reset the selection
             root.update()
 
-    # def update_plot_okresy(KRAJ):
+    def plot_geopackage_selection_okr(root, gpkg_paths, loading_window, selected_nazev=None):
+        """
+        Plot GeoPackage files on a Matplotlib figure embedded in a Tkinter window.
+        This modification only choses okresy.shp selected border and obce_generalized.shp
+        Kraje are not plotted
+
+        Parameters:
+        root (tkinter.Tk): The root Tkinter window.
+        gpkg_paths (list): A list of tuples containing the GeoPackage file paths and their corresponding colors.
+        loading_window (tkinter.Toplevel): The loading window to be destroyed before plotting.
+        selected_nazev (str): The selected nazev from the combobox.
+
+        Returns:
+        None
+        """
+        # Create a Matplotlib figure and axis
+        loading_window = loading_screen(root)
+        root.update()
+
+        fig, ax = plt.subplots()
+
+        # Read GeoPackage files and store them in a dictionary
+        gpkg_data = {}
+        column_mapping = {
+            "geodata/okresy.shp": "Název_okr",
+            "geodata/obce_generalized.shp": "nazev_okre"  # Updated mapping
+        }
+        # Get the necessary GeoPackage files based on the selected region
+        necessary_gpkg_paths = []
+        for gpkg_path, color in gpkg_paths:
+            if gpkg_path in column_mapping:
+                necessary_gpkg_paths.append((gpkg_path, color))
+
+        for gpkg_path, color in necessary_gpkg_paths:
+            gpkg_data[gpkg_path] = gpd.read_file(gpkg_path)
+
+        # Dictionary mapping shapefile paths to the corresponding column names for filtering
+
+        for gpkg_path, color in necessary_gpkg_paths:
+            gdf = gpkg_data[gpkg_path]
+
+            # Check if the shapefile path is in the column_mapping dictionary
+            if gpkg_path in column_mapping:
+                column_name = column_mapping[gpkg_path]
+
+                # Check if the column exists in the GeoDataFrame
+                if column_name in gdf.columns:
+                    # Filter GeoDataFrame based on the selected value in the corresponding column
+                    if selected_nazev is not None:
+                        gdf = gdf[gdf[column_name] == selected_nazev]
+
+                    # Plot only the borders of the GeoDataFrame on Matplotlib axis and color them
+                    gdf.boundary.plot(ax=ax, color=color)
+
+        ax.set_axis_off()
+
+        canvas = FigureCanvasTkAgg(fig, master=root)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        loading_window.destroy()
+
+    def update_plot_okres(event):
+        """
+        Update the plot based on the selected value in the second combobox.
+        """
+        global selected_nazev_okres
+        global okresy_nazvy
+
+        selected_nazev_okres = combo_var_okresy.get()
+
+        # Plot okres and obce
+        for widget in root.winfo_children():
+            if isinstance(widget, tk.Widget):
+                widget.destroy()
+        plot_geopackage_selection_okr(root, gpkg_paths_no_kraje[::-1], loading_window, selected_nazev_okres)
+        root.update()
 
     # Bind the event to update_plot function for kraje combobox
     combo_box_kraje.bind("<<ComboboxSelected>>", update_plot)
 
-    combo_box_okresy.bind("<<ComboboxSelected>>")  # update_plot_okresy(selected_nazev_kraj))
+    combo_box_okresy.bind("<<ComboboxSelected>>", update_plot_okres)
     root2.mainloop()
     root.mainloop()
 
