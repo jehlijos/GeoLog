@@ -11,6 +11,7 @@
         <a href="http://www.wtfpl.net/"><img
        src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-1.png"
        width="88" height="31" alt="WTFPL" /></a>
+<br>
 ## Used Data  <br>
 - Spatial data - [ArcČR 4.1](https://www.arcdata.cz/cs-cz/produkty/data/arccr)
 - [icon](https://icon-icons.com/icon/nearby-map-location-address/88844)
