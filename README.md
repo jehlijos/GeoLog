@@ -7,6 +7,10 @@
 - User account selection, creation, and deletion as tables in a local database <br>
 - Manual addition and deletion of visited municipalities <br>
 - Support for adding municipalities based on coordinates from the output of the Stopař (tracking module) feature from Mapy.cz <br> <br>
+<br>
+        <a href="http://www.wtfpl.net/"><img
+       src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-1.png"
+       width="88" height="31" alt="WTFPL" /></a>
 ## Used Data  <br>
 - Spatial data - [ArcČR 4.1](https://www.arcdata.cz/cs-cz/produkty/data/arccr)
 - [icon](https://icon-icons.com/icon/nearby-map-location-address/88844)
