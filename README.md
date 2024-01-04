@@ -8,4 +8,6 @@
 - Manual addition and deletion of visited municipalities <br>
 - Support for adding municipalities based on coordinates from the output of the Stopař (tracking module) feature from Mapy.cz <br> <br>
 ## Used Data  <br>
+- Spatial data - [ArcČR 4.1](https://www.arcdata.cz/cs-cz/produkty/data/arccr)
+- [icon](https://icon-icons.com/icon/nearby-map-location-address/88844)
 ## Funcionality  <br>
