@@ -11,3 +11,5 @@
 - Spatial data - [ArcČR 4.1](https://www.arcdata.cz/cs-cz/produkty/data/arccr)
 - [icon](https://icon-icons.com/icon/nearby-map-location-address/88844)
 ## Funcionality  <br>
+In first combobox in settings panel you can pick a region to zoom to.
+![In first combobox in settings panel you can pick a region to zoom to.](/main/readme_files/1.png)
