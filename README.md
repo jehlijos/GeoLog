@@ -31,9 +31,3 @@ By clicking on the orange button in settings panel, new panel will appear, where
 
 
 
-
-
-
-<br>
- <a href="http://www.wtfpl.net/"><imgsrc="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-1.png" width="88" height="31" alt="WTFPL" /></a>
-<br>
