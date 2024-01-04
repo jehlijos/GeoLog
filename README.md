@@ -12,4 +12,6 @@
 - [icon](https://icon-icons.com/icon/nearby-map-location-address/88844)
 ## Funcionality  <br>
 In first combobox in settings panel you can pick a region to zoom to.
-![In first combobox in settings panel you can pick a region to zoom to.](/main/readme_files/1.png)
+![In first combobox in settings panel you can pick a region to zoom to.](readme_files/1.png)
+This action will unlock second combobox where you can pick a district to zoom to. 
+![second combobox where you can pick a district to zoom to](readme_files/2.png)
