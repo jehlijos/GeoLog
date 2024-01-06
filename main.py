@@ -199,12 +199,7 @@ def main():
     root.title("GeoLog")
     root.iconbitmap("files/ico.ico")
 
-
-
-
     root.update()
-
-
 
     def quit_app():
         """
@@ -296,6 +291,7 @@ def main():
     # Create a combobox with the list of  kraje names
     combo_box_kraje = ttk.Combobox(root2, textvariable=combo_var_kraje, values=quoted_kraje_nazvy)
     combo_box_kraje.pack(pady=20)
+    combo_box_kraje['state'] = 'readonly'
 
     # okresy selection (initially hidden)
     label = Label(root2, text="Přibliž na okres:", font=desc_font)
@@ -604,11 +600,13 @@ def main():
         combo_var_REMuser = tk.StringVar(removeuserpanelroot)
         combo_var_REMuser.set("--vyber uživatele--")  # Default text in the combobox
 
+
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         rem_tables = cursor.fetchall()  # Returns a list of tables in the database = users
 
         combo_box_REMuser = ttk.Combobox(removeuserpanelroot, textvariable=combo_var_REMuser, values=rem_tables)
         combo_box_REMuser.pack(pady=20)
+        combo_box_REMuser['state'] = 'readonly'
         combo_box_REMuser.bind("<<ComboboxSelected>>", update_REMuser_var)
 
         # Text
@@ -663,7 +661,7 @@ def main():
 
         combo_box_user = ttk.Combobox(root3, textvariable=combo_var_user, values=tables)
         combo_box_user.pack(pady=20)
-
+        combo_box_user['state'] = 'readonly'
         combo_box_user.bind("<<ComboboxSelected>>", existing_user_selected)  # Bind the event to update user
 
         # Buttons
@@ -739,6 +737,7 @@ def main():
         quoted_krajeADD_nazvy = ['{}'.format(nazev) for nazev in krajeADD_nazvy]
         combo_box_krajeADD = ttk.Combobox(add_obec_root, textvariable=combo_var_krajeADD, values=quoted_krajeADD_nazvy)
         combo_box_krajeADD.pack(pady=20)
+        combo_box_krajeADD['state'] = 'readonly'
 
         # okresy selection (initially hidden)
         label = Label(add_obec_root, text="Vyber okres:", font=desc_font)
@@ -754,6 +753,7 @@ def main():
                                            values=quoted_okresyADD_nazvy, state="disabled")
         combo_box_okresyADD.pack(pady=20)
 
+
         label = Label(add_obec_root, text="Vyber obec:", font=desc_font)
         label.pack(pady=1)  # show description
 
@@ -768,12 +768,14 @@ def main():
                                          values=quoted_obecADD_nazvy, state="disabled")
         combo_box_obecADD.pack(pady=20)
 
+
         label = Label(add_obec_root, text="Vyber datum:", font=desc_font)
         label.pack(pady=1)  # show description
 
         # Calendar widget for date selection with Czech lagnuage and format
         cal = DateEntry(add_obec_root, locale='cs_CZ', date_pattern='dd-mm-yyyy', selectmode='day')
         cal.pack(pady=20)
+        cal['state'] = 'readonly'
 
         def IMPORTobec():
             """
@@ -821,6 +823,8 @@ def main():
             if ADDkraj == "Celá ČR":
                 combo_box_okresyADD.set("--vyber okres--")
                 combo_box_okresyADD['state'] = 'disabled'
+                combo_box_obecADD.set("--vyber obec--")
+                combo_box_obecADD['state'] = 'disabled'
                 return
             # Enable the second combobox, fill it wih okresy and reset the selection
             quoted_okresyADD_nazvy = list(okresy_shp[okresy_shp['Název_kra'] == ADDkraj]['Název_okr'])
@@ -838,7 +842,7 @@ def main():
 
             ADDokres = combo_var_okresyADD.get()
             combo_box_obecADD.set("--vyber obec--")
-            combo_box_obecADD['state'] = 'enabled'  # Enable the third combobox
+            combo_box_obecADD['state'] = 'readonly'  # Enable the third combobox
             quoted_obecADD_nazvy = list(obce_shp[obce_shp['nazev_okre'] == ADDokres]['nazev_obce'])
             combo_box_obecADD['values'] = quoted_obecADD_nazvy
 
