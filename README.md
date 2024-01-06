@@ -11,6 +11,7 @@
 ## Used Data  <br>
 - Spatial data - [ArcČR 4.1](https://www.arcdata.cz/cs-cz/produkty/data/arccr)
 - [icon](https://icon-icons.com/icon/nearby-map-location-address/88844)
+- Tkinter theme - [Azure-ttk-theme](https://github.com/rdbende/Azure-ttk-theme/)
 ## Funcionality  <br>
 In first combobox in settings panel you can pick a region to zoom to. <br>
 ![In first combobox in settings panel you can pick a region to zoom to.](readme_files/1.png)  <br> <br>
