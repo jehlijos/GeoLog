@@ -14,7 +14,7 @@
 - Tkinter theme - [Azure-ttk-theme](https://github.com/rdbende/Azure-ttk-theme/)
 ## Funcionality  <br>
 In first combobox in settings panel you can pick a region to zoom to. <br>
-![In first combobox in settings panel you can pick a region to zoom to.](readme_files/1.png)  <br> <br>
+![In first combobox in settings panel you can pick a region to zoom to](readme_files/1.png)  <br> <br>
 This action will unlock second combobox where you can pick a district to zoom to.   <br>
 ![second combobox where you can pick a district to zoom to](readme_files/2.png)  <br><br>
 In second part od the settings panel you can open user settings window.  <br>
