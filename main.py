@@ -198,7 +198,13 @@ def main():
     root.geometry(f"{(screen_width - 100)}x{(screen_height - 100)}")
     root.title("GeoLog")
     root.iconbitmap("files/ico.ico")
+
+
+
+
     root.update()
+
+
 
     def quit_app():
         """
@@ -269,6 +275,8 @@ def main():
     root2 = tk.Toplevel(root)
     root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.45))}")
     root2.title("GeoLog - nastavení")
+    root2.tk.call("source", "files/azure.tcl")
+    root2.tk.call("set_theme", "light")
     root2.iconbitmap("files/ico.ico")
     root2.resizable(False, False)
 
@@ -493,6 +501,8 @@ def main():
         adduserpanelroot = tk.Tk()
         adduserpanelroot.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
         adduserpanelroot.title("GeoLog - nový uživatel")
+        adduserpanelroot.tk.call("source", "files/azure.tcl")
+        adduserpanelroot.tk.call("set_theme", "light")
         adduserpanelroot.iconbitmap("files/ico.ico")
         adduserpanelroot.update()
 
@@ -582,6 +592,8 @@ def main():
         removeuserpanelroot = tk.Tk()
         removeuserpanelroot.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
         removeuserpanelroot.title("GeoLog - vymaž uživatele")
+        removeuserpanelroot.tk.call("source", "files/azure.tcl")
+        removeuserpanelroot.tk.call("set_theme", "light")
         removeuserpanelroot.iconbitmap("files/ico.ico")
         removeuserpanelroot.update()
         # Text
@@ -633,6 +645,8 @@ def main():
         root3 = tk.Tk()
         root3.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
         root3.title("GeoLog - uživatelé")
+        root3.tk.call("source", "files/azure.tcl")
+        root3.tk.call("set_theme", "light")
         root3.iconbitmap("files/ico.ico")
         root3.update()
 
@@ -704,6 +718,8 @@ def main():
         add_obec_root = tk.Tk()
         add_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.48))}")
         add_obec_root.title("GeoLog - přidej obec")
+        add_obec_root.tk.call("source", "files/azure.tcl")
+        add_obec_root.tk.call("set_theme", "light")
         add_obec_root.iconbitmap("files/ico.ico")
         add_obec_root.update()
 
@@ -866,6 +882,8 @@ def main():
         remove_obec_root = tk.Tk()
         remove_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
         remove_obec_root.title("GeoLog - odeber obec")
+        remove_obec_root.tk.call("source", "files/azure.tcl")
+        remove_obec_root.tk.call("set_theme", "light")
         remove_obec_root.iconbitmap("files/ico.ico")
         remove_obec_root.update()
 
