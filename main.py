@@ -600,7 +600,6 @@ def main():
         combo_var_REMuser = tk.StringVar(removeuserpanelroot)
         combo_var_REMuser.set("--vyber uživatele--")  # Default text in the combobox
 
-
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         rem_tables = cursor.fetchall()  # Returns a list of tables in the database = users
 
@@ -753,7 +752,6 @@ def main():
                                            values=quoted_okresyADD_nazvy, state="disabled")
         combo_box_okresyADD.pack(pady=20)
 
-
         label = Label(add_obec_root, text="Vyber obec:", font=desc_font)
         label.pack(pady=1)  # show description
 
@@ -767,7 +765,6 @@ def main():
         combo_box_obecADD = ttk.Combobox(add_obec_root, textvariable=combo_var_obecADD,
                                          values=quoted_obecADD_nazvy, state="disabled")
         combo_box_obecADD.pack(pady=20)
-
 
         label = Label(add_obec_root, text="Vyber datum:", font=desc_font)
         label.pack(pady=1)  # show description
@@ -793,6 +790,7 @@ def main():
 
             obecIDs = cursor.execute("SELECT obecID FROM " + user)
             obecIDs = obecIDs.fetchall()
+            obecIDs = [int(item[0]) for item in obecIDs]
 
             # Check if obec is already in the database
             if OBECID in obecIDs:
@@ -803,6 +801,12 @@ def main():
             cursor.execute("INSERT INTO " + user + " (obecID, dat) VALUES (?, ?)", (str(OBECID), sqldate))
             conn.commit()
             print("obec pridana: " + ADDobec + "(" + ADDokres + ") -" + selected_date)
+
+            # Update the plot based on the selected value in the combobox.
+            try:
+                plot_geopackage_selection_okr(root, gpkg_paths_no_kraje[::-1], loading_window, selected_nazev_okres)
+            except:
+                plot_geopackage(root, gpkg_paths[::-1], loading_window)
 
         ADDbutton = tk.Button(add_obec_root, text="Přidej obec", command=IMPORTobec, bg="light green", padx=10,
                               pady=5,
@@ -951,6 +955,14 @@ def main():
             obecnames_andIDs_str = [f'{item[0]}({item[1]})' for item in obecnames_andIDs]
             combo_box_REMobec['values'] = obecnames_andIDs_str
             combo_var_REMobec.set("--vyber obec--")
+
+            # Update the plot
+            try:
+                plot_geopackage_selection_okr(root, gpkg_paths_no_kraje[::-1], loading_window, selected_nazev_okres)
+            except:
+                    plot_geopackage(root, gpkg_paths[::-1], loading_window)
+
+            root.update()
 
         # Text
         label = Label(remove_obec_root, text="TLAČÍTKEM NEVRATNĚ SMAŽETE \n VYBRANOU OBEC", font=desc_font)
