@@ -9,13 +9,19 @@ import sqlite3
 import os
 from tkcalendar import DateEntry
 import locale
-import struct
+import warnings
+# Loading time is quite long while reploting, so I added a loading screen
+# matplotlib might not be ideal for showing spatial data, but it works
 
 # this app works with names of Czech teritorial units.
 # Kraj is a region, okres is a district, obec is a municipality
+# nazev == name
 
 # Set the locale to Czech
 locale.setlocale(locale.LC_TIME, 'cs_CZ')
+
+# Filter out UserWarnings (about empty geometries)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def print_file_contents(filename):
@@ -95,54 +101,97 @@ def loading_screen(root):
 
 def plot_geopackage(root, gpkg_paths, loading_window):
     """
-    Plot GeoPackage files on a Matplotlib figure embedded in a Tkinter window.
+    Plot Shapefile files on a Matplotlib figure embedded in a Tkinter window.
 
     Parameters:
     root (tkinter.Tk): The root Tkinter window.
-    gpkg_paths (list): A list of tuples containing the GeoPackage file paths and their corresponding colors.
+    gpkg_paths (list): A list of tuples containing the Shapefile file paths and their corresponding colors.
     loading_window (tkinter.Toplevel): The loading window to be destroyed before plotting.
+
+    If global variable REplot is set to 1, then the function will plot visited obce in database.
 
     Returns:
     None
     """
+    global REplot
+    global obce_gdf
+
     # Create a Matplotlib figure and axis
     fig, ax = plt.subplots()
-
-    for gpkg_path, color in gpkg_paths:
-        # Read GeoPackage file using GeoPandas
-        gdf = gpd.read_file(gpkg_path)
-
-        # Plot only the borders of the GeoDataFrame on Matplotlib axis and color them
-        gdf.boundary.plot(ax=ax, color=color)
-
     # Hide the axis
     ax.set_axis_off()
+    global canvas_widget
 
-    # Create a FigureCanvasTkAgg
-    canvas = FigureCanvasTkAgg(fig, master=root)
-    canvas_widget = canvas.get_tk_widget()
-    canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    # Plot visited obce
+    if REplot == 1:
+        canvas_widget.pack_forget()
+        canvas_widget.destroy()
 
-    # Destroy the loading window once the shapefiles are loaded
-    loading_window.destroy()
+        # I didn't find a way to plot above existing plot, so I just plot everything again :(
+        for gpkg_path, color in gpkg_paths:
+            gdf = gpd.read_file(gpkg_path)
+            gdf.boundary.plot(ax=ax, color=color)
+
+        obecIDs = cursor.execute("SELECT obecID FROM " + user)
+        obecIDs = obecIDs.fetchall()
+        obecIDs = [int(item[0]) for item in obecIDs]
+
+        matching_obce = obce_gdf[obce_gdf['kod_obce'].isin(obecIDs)]
+        matching_obce.plot(ax=ax, color='red')
+
+        canvas = FigureCanvasTkAgg(fig, master=root)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        # Update the canvas after both plots
+        canvas.draw()
+        root.update()
+        loading_window.destroy()
+
+    else:
+        for gpkg_path, color in gpkg_paths:
+            # Read GeoPackage file using GeoPandas
+            gdf = gpd.read_file(gpkg_path)
+
+            # Plot only the borders of the GeoDataFrame on Matplotlib axis and color them
+            gdf.boundary.plot(ax=ax, color=color)
+
+        # Create a FigureCanvasTkAgg
+        canvas = FigureCanvasTkAgg(fig, master=root)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        # Update the canvas after both plots
+        canvas.draw()
+        root.update()
+
+        # Destroy the loading window once the shapefiles are loaded
+        loading_window.destroy()
 
 
 def plot_geopackage_selection(root, gpkg_paths, loading_window, selected_nazev=None):
     """
-    Plot GeoPackage files on a Matplotlib figure embedded in a Tkinter window.
+    Plot Shapefile files on a Matplotlib figure embedded in a Tkinter window.
+    Plots only selected kraj, coresponding okreses and obce_generalized.shp
+    If global variable REplot is set to 1, then the function will plot visited obce in database.
 
     Parameters:
     root (tkinter.Tk): The root Tkinter window.
-    gpkg_paths (list): A list of tuples containing the GeoPackage file paths and their corresponding colors.
+    gpkg_paths (list): A list of tuples containing the Shapefile file paths and their corresponding colors.
     loading_window (tkinter.Toplevel): The loading window to be destroyed before plotting.
     selected_nazev (str): The selected nazev from the combobox.
 
     Returns:
     None
     """
+
     # Create a Matplotlib figure and axis
     loading_window = loading_screen(root)
+    global canvas_widget
+    canvas_widget.pack_forget()
+    canvas_widget.destroy()
     root.update()
+    global obce_gdf
 
     fig, ax = plt.subplots()
 
@@ -179,6 +228,16 @@ def plot_geopackage_selection(root, gpkg_paths, loading_window, selected_nazev=N
 
                 # Plot only the borders of the GeoDataFrame on Matplotlib axis and color them
                 gdf.boundary.plot(ax=ax, color=color)
+
+                # Plot visited obce
+                if REplot == 1:
+                    obecIDs = cursor.execute("SELECT obecID FROM " + user)
+                    obecIDs = obecIDs.fetchall()
+                    obecIDs = [int(item[0]) for item in obecIDs]
+
+                    matching_obce = obce_gdf[
+                        ((obce_gdf['nazev_kraj'] == selected_nazev) & obce_gdf['kod_obce'].isin(obecIDs))]
+                    matching_obce.plot(ax=ax, color='red')
 
     ax.set_axis_off()
 
@@ -221,6 +280,10 @@ def main():
     add_obec_root = None
     global remove_obec_root
     remove_obec_root = None
+    global REplot
+    global obce_gdf
+    obce_gdf = None
+    REplot = 0
 
     # Declare combo_var and user as a global variable so that it can be accessed in other functions
     global combo_var_user
@@ -241,15 +304,17 @@ def main():
     conn = sqlite3.connect(os.path.join(DB_directory, 'users.db'))
     cursor = conn.cursor()
 
-    # Specify the paths to your GeoPackage files and their corresponding colors
+    # Specify the paths to your Shapefile files and their corresponding colors
     kraje_shp_path = "geodata/kraje.shp"
     okresy_shp_path = "geodata/okresy.shp"
     obce_shp_path = "geodata/obce_generalized.shp"
+
     gpkg_paths = [
         (kraje_shp_path, 'blue'),
         (okresy_shp_path, 'green'),
         (obce_shp_path, 'gray')
     ]
+    # gpkg_paths_no_kraje is used for plot_geopackage_selection_okr
     gpkg_paths_no_kraje = [
         (okresy_shp_path, 'green'),
         (obce_shp_path, 'gray')
@@ -259,6 +324,7 @@ def main():
     kraje_shp = gpd.read_file(kraje_shp_path)
     okresy_shp = gpd.read_file(okresy_shp_path)
     obce_shp = gpd.read_file(obce_shp_path)
+    obce_gdf = obce_shp
     # Display loading screen
     loading_window = loading_screen(root)
     root.update()
@@ -344,7 +410,8 @@ def main():
                 if isinstance(widget, tk.Widget):
                     widget.destroy()
             okresy_nazvy = list(okresy_shp[okresy_shp['Název_kra'] == selected_nazev_kraj]['Název_okr'])
-            plot_geopackage_selection(root, gpkg_paths[::-1], loading_window, selected_nazev_kraj)
+
+            plot_geopackage_selection(root, gpkg_paths_no_kraje[::-1], loading_window, selected_nazev_kraj)
             combo_box_okresy['values'] = okresy_nazvy
             combo_box_okresy.set('--vyber okres--')  # Reset the selection
             root.update()
@@ -355,6 +422,8 @@ def main():
         This modification only choses okresy.shp selected border and obce_generalized.shp
         Kraje are not plotted
 
+        If global variable REplot is set to 1, then the function will plot visited obce in database.
+
         Parameters:
         root (tkinter.Tk): The root Tkinter window.
         gpkg_paths (list): A list of tuples containing the GeoPackage file paths and their corresponding colors.
@@ -364,19 +433,23 @@ def main():
         Returns:
         None
         """
+        global canvas_widget
+        global obce_gdf
         # Create a Matplotlib figure and axis
         loading_window = loading_screen(root)
+        canvas_widget.pack_forget()
+        canvas_widget.destroy()
         root.update()
 
         fig, ax = plt.subplots()
 
-        # Read GeoPackage files and store them in a dictionary
+        # Read Shapefile files and store them in a dictionary
         gpkg_data = {}
         column_mapping = {
             "geodata/okresy.shp": "Název_okr",
-            "geodata/obce_generalized.shp": "nazev_okre"  # Updated mapping
+            "geodata/obce_generalized.shp": "nazev_okre"
         }
-        # Get the necessary GeoPackage files based on the selected region
+        # Get the necessary Shapefile files based on the selected region
         necessary_gpkg_paths = []
         for gpkg_path, color in gpkg_paths:
             if gpkg_path in column_mapping:
@@ -402,6 +475,16 @@ def main():
 
                     # Plot only the borders of the GeoDataFrame on Matplotlib axis and color them
                     gdf.boundary.plot(ax=ax, color=color)
+
+                    # Plot visited obce in database based on the selected value in the combobox (current zoom)
+                    if REplot == 1:
+                        obecIDs = cursor.execute("SELECT obecID FROM " + user)
+                        obecIDs = obecIDs.fetchall()
+                        obecIDs = [int(item[0]) for item in obecIDs]
+
+                        matching_obce = obce_gdf[
+                            ((obce_gdf['nazev_okre'] == selected_nazev) & obce_gdf['kod_obce'].isin(obecIDs))]
+                        matching_obce.plot(ax=ax, color='red')
 
         ax.set_axis_off()
 
@@ -431,6 +514,42 @@ def main():
     combo_box_kraje.bind("<<ComboboxSelected>>", update_plot)
 
     combo_box_okresy.bind("<<ComboboxSelected>>", update_plot_okres)
+
+    def re_plot():
+        """
+        Replot the map with visited obce in database based on the selected value in the combobox (current zoom).
+        set REplot to 1 to change functionality of
+        plot_geopackage/plot_geopackage_selection/plot_geopackage_selection_okr .
+
+        This function is started after every change of user or after adding/removing obec.
+        """
+        global REplot
+
+        loading_window = loading_screen(root)
+        root.update()
+        # get current zoom
+        kraj_select = combo_var_kraje.get()
+        okres_select = combo_var_okresy.get()
+
+        # plot visited obce in database based on the selected value in the combobox (current zoom)
+        if kraj_select == "--vyber kraj--" and okres_select == "--vyber okres--":
+            plot_geopackage(root, gpkg_paths[::-1], loading_window)
+
+        elif kraj_select != "--vyber kraj--" and okres_select == "--vyber okres--":
+            loading_window.destroy()
+            plot_geopackage_selection(root, gpkg_paths_no_kraje[::-1], loading_window, kraj_select)
+
+        elif kraj_select != "--vyber kraj--" and okres_select != "--vyber okres--":
+            loading_window.destroy()
+            plot_geopackage_selection_okr(root, gpkg_paths_no_kraje[::-1], loading_window, okres_select)
+
+        else:
+            print("chyba pri prekresleni")
+
+        try:
+            loading_window.destroy()
+        except:
+            pass
 
     def add_user():
         """
@@ -481,6 +600,10 @@ def main():
         root3.destroy()
         adduserpanelroot.destroy()
 
+        global REplot
+        REplot = 1
+        re_plot()
+
     def adduserpanel():
         """
         Create a new window with a entry to enter a new user.
@@ -525,6 +648,7 @@ def main():
         This function is bound to the <<ComboboxSelected>> event.
         """
         global user
+        global REplot
 
         user = combo_var_user.get()
         user_label.config(text="Uživatel:  " + user)
@@ -534,6 +658,9 @@ def main():
         button1.config(state="normal")
         button2.config(state="normal")
         button3.config(state="normal")
+
+        REplot = 1
+        re_plot()
 
         root2.update()
         root3.destroy()
@@ -577,6 +704,7 @@ def main():
         global removeuserpanelroot
         global entryuser
         global combo_var_REMuser
+        global REplot
 
         # Check if root already exists and destroy it if it does remove it
         if removeuserpanelroot is not None:
@@ -623,6 +751,8 @@ def main():
 
         removeuserpanelroot.protocol("WM_DELETE_WINDOW", removeuserpanelroot.destroy)
         # Destroy removeuserpanelroot when the user closes the window
+        REplot = 0
+        re_plot()
 
     def userpanel():
         """
@@ -802,11 +932,7 @@ def main():
             conn.commit()
             print("obec pridana: " + ADDobec + "(" + ADDokres + ") -" + selected_date)
 
-            # Update the plot based on the selected value in the combobox.
-            try:
-                plot_geopackage_selection_okr(root, gpkg_paths_no_kraje[::-1], loading_window, selected_nazev_okres)
-            except:
-                plot_geopackage(root, gpkg_paths[::-1], loading_window)
+            re_plot()
 
         ADDbutton = tk.Button(add_obec_root, text="Přidej obec", command=IMPORTobec, bg="light green", padx=10,
                               pady=5,
@@ -835,6 +961,10 @@ def main():
             combo_box_okresyADD['values'] = quoted_okresyADD_nazvy
             combo_box_okresyADD.set('--vyber okres--')
             combo_box_okresyADD['state'] = 'readonly'
+
+            # Disable the third combobox
+            combo_box_obecADD.set("--vyber obec--")
+            combo_box_obecADD['state'] = 'disabled'
 
         def ADDokresy(event):
             """
@@ -956,12 +1086,7 @@ def main():
             combo_box_REMobec['values'] = obecnames_andIDs_str
             combo_var_REMobec.set("--vyber obec--")
 
-            # Update the plot
-            try:
-                plot_geopackage_selection_okr(root, gpkg_paths_no_kraje[::-1], loading_window, selected_nazev_okres)
-            except:
-                    plot_geopackage(root, gpkg_paths[::-1], loading_window)
-
+            re_plot()
             root.update()
 
         # Text
