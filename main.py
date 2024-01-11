@@ -10,6 +10,8 @@ import os
 from tkcalendar import DateEntry
 import locale
 import warnings
+from tkinter import filedialog as fd
+
 # Loading time is quite long while reploting, so I added a loading screen
 # matplotlib might not be ideal for showing spatial data, but it works
 
@@ -280,10 +282,14 @@ def main():
     add_obec_root = None
     global remove_obec_root
     remove_obec_root = None
+    global stopar_root
+    stopar_root = None
     global REplot
     global obce_gdf
     obce_gdf = None
     REplot = 0
+    global stoparFILE
+    stoparFILE = None
 
     # Declare combo_var and user as a global variable so that it can be accessed in other functions
     global combo_var_user
@@ -997,7 +1003,74 @@ def main():
         # Destroy removeuserpanelroot when the user closes the window
 
     def stopar_window():
-        print("stopar window soon to be added")
+        """
+        Add a new window with a button to select a GPX file.
+        Upon selecting a GPX file, the global variable stoparFILE will be updated.
+        Pushing the button will process the GPX file.
+        """
+
+        global stoparFILE
+        global stopar_root
+        # Check if root already exists and destroy it if it does remove it
+        if stopar_root is not None:
+            try:
+                stopar_root.destroy()
+            except:
+                pass
+        # Window creation
+        stopar_root = tk.Tk()
+        stopar_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.20))}")
+        stopar_root.title("GeoLog - načti soubor - Stopař")
+        stopar_root.tk.call("source", "files/azure.tcl")
+        stopar_root.tk.call("set_theme", "light")
+        stopar_root.iconbitmap("files/ico.ico")
+
+        def browseFiles():
+            """
+            Open a file explorer window to select a GPX file.
+            """
+            global stoparFILE
+
+            current_stoparFILE = stoparFILE
+
+            stoparFILE = fd.askopenfilename(initialdir="/", title="Vyber soubor Stopaře", filetypes=(("Soubor GPX",
+                                                                                                      "*.gpx*"),
+                                                                                                     ("all files",
+                                                                                                      "*.*")))
+            # Check if the user canceled the file selection
+            if not stoparFILE:
+                # Restore the original value of stoparFILE
+                stoparFILE = current_stoparFILE
+                print(stoparFILE)
+
+            else:
+                print(stoparFILE)
+                label_file.configure(text=stoparFILE)
+
+        def processGPX():
+            print("processing GPX: " + stoparFILE)
+
+        # Button to open file explorer
+        button_explore = ttk.Button(stopar_root, text="Načti soubor", command=browseFiles)
+        button_explore.pack(padx=5, pady=5)
+
+        # Label to show the selected file
+        label_file = Label(stopar_root, text="-- žádný soubor --", font=desc_font, fg="blue")
+        label_file.pack(pady=15)  # show description
+
+        # Button to process the selected file
+        button_startStopar = tk.Button(stopar_root, text="Nahraj soubor", command=processGPX, bg="light green",
+                                       fg="black",
+                                       padx=10,
+                                       pady=5,
+                                       width=15)
+        button_startStopar.pack(padx=20)
+
+        label_StoparError = Label(stopar_root, text=" ", font=desc_font, fg="red")
+        label_StoparError.pack(pady=5)  # show description
+
+        stopar_root.protocol("WM_DELETE_WINDOW", stopar_root.destroy)
+        # Destroy stopar_root when the user closes the window
 
     def remove_obec_window():
         """
