@@ -11,6 +11,10 @@ from tkcalendar import DateEntry
 import locale
 import warnings
 from tkinter import filedialog as fd
+import gpxpy
+from pyproj import Transformer
+from shapely.geometry import Point
+
 
 # Loading time is quite long while reploting, so I added a loading screen
 # matplotlib might not be ideal for showing spatial data, but it works
@@ -1048,7 +1052,99 @@ def main():
                 label_file.configure(text=stoparFILE)
 
         def processGPX():
-            print("processing GPX: " + stoparFILE)
+            """
+            Process the selected GPX file.
+            Trabform the coordinates to the S-JTSK coordinate system.
+            Select the obecID based on the coordinates.
+            Retrieve first date for each obecID from GPX file.
+            If obecID is already in the database, will not be added again.
+            Insert the obecID and date into the database.
+            Replot the map.
+            """
+            global stoparFILE
+            with open(stoparFILE, 'r') as file:
+
+                # Check if the file is a valid GPX file
+                try: gpx = gpxpy.parse(file)
+                except:
+                    label_StoparError.configure(text="Chyba při načítání souboru", fg="red")
+                    return
+                if not gpx:
+                    label_StoparError.configure(text="Chyba při načítání souboru", fg="red")
+                    return
+                if not gpx.tracks:
+                    label_StoparError.configure(text="Chyba při načítání souboru", fg="red")
+                    return
+                if not gpx.tracks[0].segments:
+                    label_StoparError.configure(text="Chyba při načítání souboru", fg="red")
+                    return
+                if not gpx.tracks[0].segments[0].points:
+                    label_StoparError.configure(text="Chyba při načítání souboru", fg="red")
+                    return
+                if len(gpx.tracks[0].segments[0].points) < 1:
+                    label_StoparError.configure(text="Chyba při načítání souboru", fg="red")
+                    return
+
+                # Initialize lists to store latitude and longitude
+                latitudes = []
+                longitudes = []
+
+                n = 10  # Every n-th point will be used
+
+                # Iterate through tracks, segments, and points
+                for track in gpx.tracks:
+                    for segment in track.segments:
+                        filtered_points = segment.points[::n]
+                        latitudes.extend(point.latitude for point in filtered_points)
+                        longitudes.extend(point.longitude for point in filtered_points)
+
+                # Convert latitude and longitude to the S-JTSK coordinate system
+                transformer = Transformer.from_crs("EPSG:4326", "EPSG:5514")
+                coordinates = transformer.transform(latitudes, longitudes)
+
+                # Select ObecID based on the coordinates
+                selected_obecIDs = []
+                for i in range(len(coordinates[0])):
+                    selected_obecIDs.append(obce_shp[obce_shp['geometry'].contains(Point(coordinates[0][i], coordinates[1][i]))]['kod_obce'].iloc[0])
+
+                # Retrieve first date for each obecID from GPX file
+                dates = []
+                for track in gpx.tracks:
+                    for segment in track.segments:
+                        for point in segment.points:
+                            dates.append(point.time)
+                print(dates)
+
+                # select position index of first occurence of each unique obecID
+                occurences = [0]
+                for i in range(1,len(selected_obecIDs)):
+                    if selected_obecIDs[i] != selected_obecIDs[i-1]:
+                        occurences.append(i)
+                print(occurences)
+
+                # select dates of first occurence of each unique obecID
+                dates = [dates[i] for i in occurences]
+                # convert dates to SQL entry string
+                dates = [str(date)[0:10] for date in dates]
+
+                selected_obecIDs= list(set(selected_obecIDs)) # Remove duplicates
+
+                # Get the obecIDs from the database
+                obecIDs = cursor.execute("SELECT obecID FROM " + user)
+                obecIDs = obecIDs.fetchall()
+                obecIDs = [int(item[0]) for item in obecIDs]
+
+                # Check if obec is already in the database and remove it from the list if it is
+                selected_obecIDs = [x for x in selected_obecIDs if x not in obecIDs]
+
+                # Insert the obecID and date into the database
+                for i in range(len(selected_obecIDs)):
+                    cursor.execute("INSERT INTO " + user + " (obecID, dat) VALUES (?, ?)", (str(selected_obecIDs[i]), dates[i]))
+                    conn.commit()
+                    print("obec pridana: " + str(selected_obecIDs[i]) + " -" + dates[i])
+
+                re_plot()
+                stopar_root.destroy()
 
         # Button to open file explorer
         button_explore = ttk.Button(stopar_root, text="Načti soubor", command=browseFiles)
