@@ -1,0 +1,62 @@
+def plot_geopackage(root, gpkg_paths, loading_window):
+    """
+    Plot Shapefile files on a Folium map embedded in a Tkinter window.
+
+    Parameters:
+    root (tkinter.Tk): The root Tkinter window.
+    gpkg_paths (list): A list of tuples containing the Shapefile file paths and their corresponding colors.
+    loading_window (tkinter.Toplevel): The loading window to be destroyed before plotting.
+
+    If global variable REplot is set to 1, then the function will plot visited obce in the database.
+
+    Returns:
+    None
+    """
+    global REplot
+    global obce_gdf
+
+    # Create a Folium map
+    my_map = folium.Map(location=[0, 0], zoom_start=2)
+
+    # Plot visited obce
+    if REplot == 1:
+        for gpkg_path, color in gpkg_paths:
+            gdf = gpd.read_file(gpkg_path)
+            geojson_layer = folium.GeoJson(gdf, style_function=lambda feature, color=color: {
+                'fillColor': color,
+                'color': color,
+                'weight': 2,
+                'fillOpacity': 0.5,
+            }).add_to(my_map)
+
+        obecIDs = cursor.execute("SELECT obecID FROM " + user)
+        obecIDs = obecIDs.fetchall()
+        obecIDs = [int(item[0]) for item in obecIDs]
+
+        matching_obce = obce_gdf[obce_gdf['kod_obce'].isin(obecIDs)]
+        folium.GeoJson(matching_obce, style_function=lambda feature: {
+            'fillColor': 'red',
+            'color': 'red',
+            'weight': 2,
+            'fillOpacity': 0.5,
+        }).add_to(my_map)
+
+        # Destroy the loading window once the shapefiles are loaded
+        loading_window.destroy()
+
+    else:
+        for gpkg_path, color in gpkg_paths:
+            gdf = gpd.read_file(gpkg_path)
+            geojson_layer = folium.GeoJson(gdf, style_function=lambda feature, color=color: {
+                'fillColor': color,
+                'color': color,
+                'weight': 2,
+                'fillOpacity': 0.5,
+            }).add_to(my_map)
+
+        # Destroy the loading window once the shapefiles are loaded
+        loading_window.destroy()
+
+    # Save the map to an HTML file and open it in the default web browser
+    my_map.save("map.html")
+    webbrowser.open("map.html")
