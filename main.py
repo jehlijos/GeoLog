@@ -14,7 +14,7 @@ from tkinter import filedialog as fd
 import gpxpy
 from pyproj import Transformer
 from shapely.geometry import Point
-
+from PIL import Image, ImageTk
 
 # Loading time is quite long while reploting, so I added a loading screen
 # matplotlib might not be ideal for showing spatial data, but it works
@@ -91,16 +91,17 @@ def loading_screen(root):
     loading_window.geometry("500x200")
     loading_window.iconbitmap("files/ico.ico")
 
+    screen_width, screen_height = get_screen_resolution()
     custom_font_large = ("Raleway", 48)  # Specify the font family and size for the large text
     custom_font_small = ("Raleway", 16)  # Specify the font family and size for the small text
 
     # Large text label
     label_large = Label(loading_window, text="NAČÍTÁNÍ...", font=custom_font_large)
-    label_large.pack(pady=10)
+    label_large.pack(pady=(screen_height / 1080) * 10)
 
     # Small text label
     label_small = Label(loading_window, text="Dejte si kávičku, za chvíli bude hotovo :)", font=custom_font_small)
-    label_small.pack(pady=10)
+    label_small.pack(pady=(screen_height / 1080) * 10)
 
     return loading_window
 
@@ -294,6 +295,8 @@ def main():
     REplot = 0
     global stoparFILE
     stoparFILE = None
+    global date_picker_root
+    date_picker_root = None
 
     # Declare combo_var and user as a global variable so that it can be accessed in other functions
     global combo_var_user
@@ -344,7 +347,11 @@ def main():
 
     ######################### SETTINGS PANEL #########################
     root2 = tk.Toplevel(root)
-    root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.45))}")
+    if screen_width / screen_height > 1.6:
+        root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.52))}")
+    else:
+        root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.7))}")
+
     root2.title("GeoLog - nastavení")
     root2.tk.call("source", "files/azure.tcl")
     root2.tk.call("set_theme", "light")
@@ -354,7 +361,7 @@ def main():
     # kraj selection
     desc_font = ("Raleway", 10)  # Specify the font family and size for the description
     label = Label(root2, text="Přibliž na kraj:", font=desc_font)
-    label.pack(pady=1)
+    label.pack(pady=screen_height / 1080)
 
     combo_var_kraje = tk.StringVar(root2)
     combo_var_kraje.set("--vyber kraj--")  # Default text in the combobox
@@ -366,12 +373,12 @@ def main():
     quoted_kraje_nazvy = ['{}'.format(nazev) for nazev in kraje_nazvy]
     # Create a combobox with the list of  kraje names
     combo_box_kraje = ttk.Combobox(root2, textvariable=combo_var_kraje, values=quoted_kraje_nazvy)
-    combo_box_kraje.pack(pady=20)
+    combo_box_kraje.pack(pady=(screen_height / 1080) * 20)
     combo_box_kraje['state'] = 'readonly'
 
     # okresy selection (initially hidden)
     label = Label(root2, text="Přibliž na okres:", font=desc_font)
-    label.pack(pady=1)  # show description
+    label.pack(pady=screen_height / 1080)  # show description
 
     # Create a combobox with the list of  okresy names
     combo_var_okresy = tk.StringVar(root2)
@@ -382,7 +389,7 @@ def main():
     # filling the combobox with okresy names
     quoted_okresy_nazvy = ['{}'.format(nazev) for nazev in okresy_nazvy]
     combo_box_okresy = ttk.Combobox(root2, textvariable=combo_var_okresy, values=quoted_okresy_nazvy, state="disabled")
-    combo_box_okresy.pack(pady=20)
+    combo_box_okresy.pack(pady=(screen_height / 1080) * 20)
 
     selected_nazev_kraj = None
 
@@ -576,14 +583,14 @@ def main():
         if not username or ' ' in username:
             print("Neplatné jméno, nepoužívej mezery")
             labelusererr = Label(adduserpanelroot, text="Neplatné jméno, nepoužívej mezery", font=desc_font, fg="red")
-            labelusererr.pack(pady=1)
+            labelusererr.pack(pady=screen_height / 1080)
             return
 
         # Check if username contains only alphanumeric characters
         if not username.isalnum():
             print("Neplatné jméno, nepoužívej mezery")
             labelusererr = Label(adduserpanelroot, text="Neplatné jméno, nepoužívej mezery", font=desc_font, fg="red")
-            labelusererr.pack(pady=1)
+            labelusererr.pack(pady=screen_height / 1080)
             return
 
         # Check if username already exists
@@ -592,7 +599,7 @@ def main():
         if (username,) in existing_tables:
             print("uzivatel uz existuje")
             labelusererr = Label(adduserpanelroot, text="Uživatel již existuje", font=desc_font, fg="red")
-            labelusererr.pack(pady=1)
+            labelusererr.pack(pady=screen_height / 1080)
             return
 
         print("uzivatel vytvoren: " + username)
@@ -606,6 +613,8 @@ def main():
         button1.config(state="normal")
         button2.config(state="normal")
         button3.config(state="normal")
+        buttonstat.config(state="normal")
+        buttondate.config(state="normal")
 
         root3.destroy()
         adduserpanelroot.destroy()
@@ -637,17 +646,17 @@ def main():
 
         # Text
         labeluser = Label(adduserpanelroot, text="Vlož jméno nového uživatele:", font=desc_font)
-        labeluser.pack(pady=1)
+        labeluser.pack(pady=screen_height / 1080)
 
         # user entry window
         entryuser = tk.Entry(adduserpanelroot, width=30)
-        entryuser.pack(pady=20)
+        entryuser.pack(pady=(screen_height / 1080) * 20)
 
         # Confirm button
         button_adduser = tk.Button(adduserpanelroot, text="PŘIDAT", command=add_user, bg="light green", padx=10,
-                                   pady=5,
+                                   pady=(screen_height / 1080) * 5,
                                    width=15)
-        button_adduser.pack(padx=5)
+        button_adduser.pack(padx=(screen_width / 1920) * 5)
 
         adduserpanelroot.protocol("WM_DELETE_WINDOW",
                                   adduserpanelroot.destroy)  # Destroy root3 when the user closes the window
@@ -668,6 +677,8 @@ def main():
         button1.config(state="normal")
         button2.config(state="normal")
         button3.config(state="normal")
+        buttonstat.config(state="normal")
+        buttondate.config(state="normal")
 
         REplot = 1
         re_plot()
@@ -681,18 +692,24 @@ def main():
         """
         global user_to_remove
         global user
+        global REplot
 
         cursor.execute("DROP TABLE " + user_to_remove)
         print("uzivatel smazan: " + user_to_remove)
         user = "---"
         user_label.config(text="Uživatel:  " + user)
 
-        button1.config(state="disabled")
-        button2.config(state="disabled")
-        button3.config(state="disabled")
+        REplot = 0
+        re_plot()
 
         root3.destroy()
         removeuserpanelroot.destroy()
+
+        buttondate['state'] = 'disabled'
+        button1['state'] = 'disabled'
+        button2['state'] = 'disabled'
+        button3['state'] = 'disabled'
+        buttonstat['state'] = 'disabled'
 
     def update_REMuser_var(event=None):
         """
@@ -724,7 +741,10 @@ def main():
                 pass
         # Window creation
         removeuserpanelroot = tk.Tk()
-        removeuserpanelroot.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
+        if screen_width / screen_height > 1.6:
+            removeuserpanelroot.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
+        else:
+            removeuserpanelroot.geometry(f"{(int(screen_width * 0.35))}x{(int(screen_height * 0.35))}")
         removeuserpanelroot.title("GeoLog - vymaž uživatele")
         removeuserpanelroot.tk.call("source", "files/azure.tcl")
         removeuserpanelroot.tk.call("set_theme", "light")
@@ -732,7 +752,7 @@ def main():
         removeuserpanelroot.update()
         # Text
         labeluser = Label(removeuserpanelroot, text="Vyber uživatele pro smazání:", font=desc_font)
-        labeluser.pack(pady=1)
+        labeluser.pack(pady=screen_height / 1080)
 
         # Combobox
         combo_var_REMuser = tk.StringVar(removeuserpanelroot)
@@ -742,27 +762,25 @@ def main():
         rem_tables = cursor.fetchall()  # Returns a list of tables in the database = users
 
         combo_box_REMuser = ttk.Combobox(removeuserpanelroot, textvariable=combo_var_REMuser, values=rem_tables)
-        combo_box_REMuser.pack(pady=20)
+        combo_box_REMuser.pack(pady=(screen_height / 1080) * 20)
         combo_box_REMuser['state'] = 'readonly'
         combo_box_REMuser.bind("<<ComboboxSelected>>", update_REMuser_var)
 
         # Text
         labeluser = Label(removeuserpanelroot, text="STISKNUTÍM TLAČÍTKA NÍŽE NEVRATNĚ \n SMAŽETE UŽIVATELSKÁ DATA",
                           font=desc_font)
-        labeluser.pack(pady=1)
+        labeluser.pack(pady=screen_height / 1080)
 
         # Button
         button_removeuser = tk.Button(removeuserpanelroot, text="Odeber uživatele", command=removeuser, bg="red",
-                                      padx=10,
-                                      pady=5,
+                                      padx=(screen_width / 1920) * 10,
+                                      pady=(screen_height / 1080) * 5,
                                       fg="white",
                                       width=15)
-        button_removeuser.pack(padx=5)
+        button_removeuser.pack(padx=(screen_width / 1920) * 5)
 
         removeuserpanelroot.protocol("WM_DELETE_WINDOW", removeuserpanelroot.destroy)
         # Destroy removeuserpanelroot when the user closes the window
-        REplot = 0
-        re_plot()
 
     def userpanel():
         """
@@ -789,7 +807,7 @@ def main():
 
         # Text
         labeluser = Label(root3, text="Vyber uživatele:", font=desc_font)
-        labeluser.pack(pady=1)
+        labeluser.pack(pady=screen_height / 1080)
 
         # Combobox
         combo_var_user = tk.StringVar(root3)
@@ -799,27 +817,27 @@ def main():
         tables = cursor.fetchall()  # Returns a list of tables in the database = users
 
         combo_box_user = ttk.Combobox(root3, textvariable=combo_var_user, values=tables)
-        combo_box_user.pack(pady=20)
+        combo_box_user.pack(pady=(screen_height / 1080) * 20)
         combo_box_user['state'] = 'readonly'
         combo_box_user.bind("<<ComboboxSelected>>", existing_user_selected)  # Bind the event to update user
 
         # Buttons
         button_adduser = tk.Button(root3, text="Přidej uživatele", command=adduserpanel, bg="light green", padx=10,
-                                   pady=5,
+                                   pady=(screen_height / 1080) * 5,
                                    width=15)
 
         button_removeuser = tk.Button(root3, text="Odeber uživatele", command=removeuserpanel, bg="orange", padx=10,
-                                      pady=5,
+                                      pady=(screen_height / 1080) * 5,
                                       width=15)
 
-        button_adduser.pack(padx=5)
-        button_removeuser.pack(padx=5)
+        button_adduser.pack(padx=(screen_width / 1920) * 5)
+        button_removeuser.pack(padx=(screen_width / 1920) * 5)
 
         root3.protocol("WM_DELETE_WINDOW", root3.destroy)  # Destroy root3 when the user closes the window
 
     # Separator between buttons
     separator = ttk.Separator(root2, orient="horizontal")
-    separator.pack(fill="x", pady=10)
+    separator.pack(fill="x", pady=(screen_height / 1080) * 10)
 
     # Button to open user panel
     user_button = ttk.Button(root2, text="Vyber uživatele", command=userpanel)
@@ -830,7 +848,7 @@ def main():
 
     # Separator between buttons
     separator = ttk.Separator(root2, orient="horizontal")
-    separator.pack(fill="x", pady=10)
+    separator.pack(fill="x", pady=(screen_height / 1080) * 10)
 
     def add_obec_window():
         """
@@ -864,7 +882,7 @@ def main():
         # kraj selection
         desc_font = ("Raleway", 10)  # Specify the font family and size for the description
         label = Label(add_obec_root, text="Vyber kraj:", font=desc_font)
-        label.pack(pady=1)
+        label.pack(pady=screen_height / 1080)
 
         combo_var_krajeADD = tk.StringVar(add_obec_root)
         combo_var_krajeADD.set("--vyber kraj--")  # Default text in the combobox
@@ -875,12 +893,12 @@ def main():
         # Enclose each 'nazev' value in double quotes
         quoted_krajeADD_nazvy = ['{}'.format(nazev) for nazev in krajeADD_nazvy]
         combo_box_krajeADD = ttk.Combobox(add_obec_root, textvariable=combo_var_krajeADD, values=quoted_krajeADD_nazvy)
-        combo_box_krajeADD.pack(pady=20)
+        combo_box_krajeADD.pack(pady=(screen_height / 1080) * 20)
         combo_box_krajeADD['state'] = 'readonly'
 
         # okresy selection (initially hidden)
         label = Label(add_obec_root, text="Vyber okres:", font=desc_font)
-        label.pack(pady=1)  # show description
+        label.pack(pady=screen_height / 1080)  # show description
 
         combo_var_okresyADD = tk.StringVar(add_obec_root)
         combo_var_okresyADD.set("--vyber okres--")  # Default text in the combobox
@@ -890,10 +908,10 @@ def main():
         quoted_okresyADD_nazvy = ['{}'.format(nazev) for nazev in okresyADD_nazvy]
         combo_box_okresyADD = ttk.Combobox(add_obec_root, textvariable=combo_var_okresyADD,
                                            values=quoted_okresyADD_nazvy, state="disabled")
-        combo_box_okresyADD.pack(pady=20)
+        combo_box_okresyADD.pack(pady=(screen_height / 1080) * 20)
 
         label = Label(add_obec_root, text="Vyber obec:", font=desc_font)
-        label.pack(pady=1)  # show description
+        label.pack(pady=screen_height / 1080)  # show description
 
         # obec selection (initially hidden)
         combo_var_obecADD = tk.StringVar(add_obec_root)
@@ -904,14 +922,14 @@ def main():
         quoted_obecADD_nazvy = ['{}'.format(nazev) for nazev in obecADD_nazvy]
         combo_box_obecADD = ttk.Combobox(add_obec_root, textvariable=combo_var_obecADD,
                                          values=quoted_obecADD_nazvy, state="disabled")
-        combo_box_obecADD.pack(pady=20)
+        combo_box_obecADD.pack(pady=(screen_height / 1080) * 20)
 
         label = Label(add_obec_root, text="Vyber datum:", font=desc_font)
-        label.pack(pady=1)  # show description
+        label.pack(pady=screen_height / 1080)  # show description
 
         # Calendar widget for date selection with Czech lagnuage and format
         cal = DateEntry(add_obec_root, locale='cs_CZ', date_pattern='dd-mm-yyyy', selectmode='day')
-        cal.pack(pady=20)
+        cal.pack(pady=(screen_height / 1080) * 20)
         cal['state'] = 'readonly'
 
         def IMPORTobec():
@@ -944,10 +962,11 @@ def main():
 
             re_plot()
 
-        ADDbutton = tk.Button(add_obec_root, text="Přidej obec", command=IMPORTobec, bg="light green", padx=10,
-                              pady=5,
+        ADDbutton = tk.Button(add_obec_root, text="Přidej obec", command=IMPORTobec, bg="light green",
+                              padx=(screen_width / 1920) * 10,
+                              pady=(screen_height / 1080) * 5,
                               width=15)
-        ADDbutton.pack(padx=5)
+        ADDbutton.pack(padx=(screen_width / 1920) * 5)
         ADDbutton.config(state="disabled")
 
         def ADDkraje(event):
@@ -1065,7 +1084,8 @@ def main():
             with open(stoparFILE, 'r') as file:
 
                 # Check if the file is a valid GPX file
-                try: gpx = gpxpy.parse(file)
+                try:
+                    gpx = gpxpy.parse(file)
                 except:
                     label_StoparError.configure(text="Chyba při načítání souboru", fg="red")
                     return
@@ -1105,7 +1125,9 @@ def main():
                 # Select ObecID based on the coordinates
                 selected_obecIDs = []
                 for i in range(len(coordinates[0])):
-                    selected_obecIDs.append(obce_shp[obce_shp['geometry'].contains(Point(coordinates[0][i], coordinates[1][i]))]['kod_obce'].iloc[0])
+                    selected_obecIDs.append(
+                        obce_shp[obce_shp['geometry'].contains(Point(coordinates[0][i], coordinates[1][i]))][
+                            'kod_obce'].iloc[0])
 
                 # Retrieve first date for each obecID from GPX file
                 dates = []
@@ -1117,8 +1139,8 @@ def main():
 
                 # select position index of first occurence of each unique obecID
                 occurences = [0]
-                for i in range(1,len(selected_obecIDs)):
-                    if selected_obecIDs[i] != selected_obecIDs[i-1]:
+                for i in range(1, len(selected_obecIDs)):
+                    if selected_obecIDs[i] != selected_obecIDs[i - 1]:
                         occurences.append(i)
                 print(occurences)
 
@@ -1127,7 +1149,7 @@ def main():
                 # convert dates to SQL entry string
                 dates = [str(date)[0:10] for date in dates]
 
-                selected_obecIDs= list(set(selected_obecIDs)) # Remove duplicates
+                selected_obecIDs = list(set(selected_obecIDs))  # Remove duplicates
 
                 # Get the obecIDs from the database
                 obecIDs = cursor.execute("SELECT obecID FROM " + user)
@@ -1139,7 +1161,8 @@ def main():
 
                 # Insert the obecID and date into the database
                 for i in range(len(selected_obecIDs)):
-                    cursor.execute("INSERT INTO " + user + " (obecID, dat) VALUES (?, ?)", (str(selected_obecIDs[i]), dates[i]))
+                    cursor.execute("INSERT INTO " + user + " (obecID, dat) VALUES (?, ?)",
+                                   (str(selected_obecIDs[i]), dates[i]))
                     conn.commit()
                     print("obec pridana: " + str(selected_obecIDs[i]) + " -" + dates[i])
 
@@ -1148,22 +1171,22 @@ def main():
 
         # Button to open file explorer
         button_explore = ttk.Button(stopar_root, text="Načti soubor", command=browseFiles)
-        button_explore.pack(padx=5, pady=5)
+        button_explore.pack(padx=5, pady=(screen_height / 1080) * 5)
 
         # Label to show the selected file
         label_file = Label(stopar_root, text="-- žádný soubor --", font=desc_font, fg="blue")
-        label_file.pack(pady=15)  # show description
+        label_file.pack(pady=(screen_width / 1920) * 10)  # show description
 
         # Button to process the selected file
         button_startStopar = tk.Button(stopar_root, text="Nahraj soubor", command=processGPX, bg="light green",
                                        fg="black",
-                                       padx=10,
-                                       pady=5,
+                                       padx=(screen_width / 1920) * 10,
+                                       pady=(screen_height / 1080) * 5,
                                        width=15)
-        button_startStopar.pack(padx=20)
+        button_startStopar.pack(padx=(screen_width / 1920) * 20)
 
         label_StoparError = Label(stopar_root, text=" ", font=desc_font, fg="red")
-        label_StoparError.pack(pady=5)  # show description
+        label_StoparError.pack(pady=(screen_height / 1080) * 5)  # show description
 
         stopar_root.protocol("WM_DELETE_WINDOW", stopar_root.destroy)
         # Destroy stopar_root when the user closes the window
@@ -1206,13 +1229,13 @@ def main():
 
         # Text
         label = Label(remove_obec_root, text="Vyber obec pro smazání:", font=desc_font)
-        label.pack(pady=1)
+        label.pack(pady=screen_height / 1080)
 
         # Combobox
         combo_var_REMobec = tk.StringVar(remove_obec_root)
 
         combo_box_REMobec = ttk.Combobox(remove_obec_root, textvariable=combo_var_REMobec, values=obecnames_andIDs_str)
-        combo_box_REMobec.pack(pady=20)
+        combo_box_REMobec.pack(pady=(screen_height / 1080) * 20)
         combo_var_REMobec.set("--vyber obec--")
         combo_box_REMobec['state'] = 'readonly'
 
@@ -1260,33 +1283,168 @@ def main():
 
         # Text
         label = Label(remove_obec_root, text="TLAČÍTKEM NEVRATNĚ SMAŽETE \n VYBRANOU OBEC", font=desc_font)
-        label.pack(pady=1)
+        label.pack(pady=screen_height / 1080)
 
         # Button
         button_REMobec = tk.Button(remove_obec_root, text="Odeber obec", command=REMbutton, bg="pink", padx=10,
-                                   pady=5,
+                                   pady=(screen_height / 1080) * 5,
                                    width=15)
-        button_REMobec.pack(padx=5)
+        button_REMobec.pack(padx=(screen_width / 1920) * 5)
 
         combo_box_REMobec.bind("<<ComboboxSelected>>", REMcombobox)
 
         remove_obec_root.protocol("WM_DELETE_WINDOW", remove_obec_root.destroy)
 
     # Create button to open add_obec_window
-    button1 = tk.Button(root2, text="Přidej obec", command=add_obec_window, bg="green", padx=10, pady=5,
+    button1 = tk.Button(root2, text="Přidej obec", command=add_obec_window, bg="green", padx=(screen_width / 1920) * 10,
+                        pady=(screen_height / 1080) * 5,
                         width=15, fg="white", state="disabled")
 
     # Create button to open stopar_window
-    button2 = tk.Button(root2, text="Načti stopaře", command=stopar_window, bg="light green", padx=10,
+    button2 = tk.Button(root2, text="Načti stopaře", command=stopar_window, bg="light green",
+                        padx=(screen_width / 1920) * 10,
                         pady=5, width=15, state="disabled")
 
     # Create button to open remove_obec_window
-    button3 = tk.Button(root2, text="Odeber obec", command=remove_obec_window, bg="orange", padx=10, pady=5,
+    button3 = tk.Button(root2, text="Odeber obec", command=remove_obec_window, bg="orange",
+                        padx=(screen_width / 1920) * 10,
+                        pady=(screen_height / 1080) * 5,
                         width=15, state="disabled")
 
-    button1.pack(padx=5)
-    button2.pack(padx=5)
-    button3.pack(padx=5)
+    button1.pack(padx=(screen_width / 1920) * 5)
+    button2.pack(padx=(screen_width / 1920) * 5)
+    button3.pack(padx=(screen_width / 1920) * 5)
+
+    def statistics():
+        print("statistics")
+
+    def date_selection():
+        """
+        Add a new window with two calendar widgets.
+        Upon clicking the button, the selected dates will be used to filter the database.
+        The results will be inserted into the text widget.
+        """
+        global text_widget
+        global date_picker_root
+
+        # Check if root already exists
+        if date_picker_root is not None:
+            try:
+                date_picker_root.destroy()
+            except:
+                pass
+
+        # Window creation
+        date_picker_root = tk.Tk()
+        if screen_width / screen_height > 1.6:
+            date_picker_root.geometry(f"{(int(screen_width * 0.30))}x{(int(screen_height * 0.45))}")
+        else:
+            date_picker_root.geometry(f"{(int(screen_width * 0.40))}x{(int(screen_height * 0.55))}")
+        date_picker_root.title("GeoLog - filtrování dle data")
+        date_picker_root.tk.call("source", "files/azure.tcl")
+        date_picker_root.tk.call("set_theme", "light")
+        date_picker_root.iconbitmap("files/ico.ico")
+        date_picker_root.update()
+
+        # make root not resizable
+        date_picker_root.resizable(False, False)
+
+        desc_font = ("Raleway", 10)  # Specify the font family and size for the description
+        label = Label(date_picker_root, text="Vyber mezi kterými daty \n chceš filtrovat své obce:\n\n OD:"
+                      , font=desc_font)
+        label.pack(pady=screen_height / 1080)
+
+        calFROM = DateEntry(date_picker_root, locale='cs_CZ', date_pattern='dd-mm-yyyy', selectmode='day')
+        calFROM.pack(pady=(screen_height / 1080) * 5)
+        calFROM['state'] = 'readonly'
+
+        label = Label(date_picker_root, text="DO:"
+                      , font=desc_font)
+        label.pack(pady=screen_height / 1080)
+
+        calTO = DateEntry(date_picker_root, locale='cs_CZ', date_pattern='dd-mm-yyyy', selectmode='day')
+        calTO.pack(pady=(screen_height / 1080) * 5)
+        calTO['state'] = 'readonly'
+
+        dateButton = tk.Button(date_picker_root, text="Filtruj",
+                               command=lambda: date_filter(calFROM.get(), calTO.get()))
+        dateButton.pack(pady=(screen_height / 1080) * 5)
+
+        # Add the text widget
+        text_widget = tk.Text(date_picker_root, state="disabled", wrap="word", height=(int(screen_height * 0.20)),
+                              width=(int(screen_height * 0.40)))
+        text_widget.pack()
+
+        def date_filter(FROM, TO):
+            """
+            Filter the database based on the selected dates and insert the results into the text widget.
+            """
+            global text_widget
+            global user
+            global cursor
+
+            print("filtr: " + FROM + " " + TO)
+            # FROM and TO - sql date format yyyy-mm-dd
+            FROM = FROM[6:10] + "-" + FROM[3:5] + "-" + FROM[0:2]
+            TO = TO[6:10] + "-" + TO[3:5] + "-" + TO[0:2]
+
+            # Get rows from the database
+            sqlquery = f"SELECT * FROM {user} WHERE dat BETWEEN ? AND ?;"
+            cursor.execute(sqlquery, (FROM, TO))
+            output = cursor.fetchall()
+            output_txt = ""
+            for row in output:
+                row = list(row)
+                # reformat the date to dd-mm-yyyy
+                DATE = row[2][8:10] + "-" + row[2][5:7] + "-" + row[2][0:4]
+                # get the obec name from the shapefile
+                intobecid = int(row[1])
+                OBEC = obce_shp[obce_shp['kod_obce'] == intobecid]['nazev_obce'].iloc[0]
+                # get the okres name from the shapefile
+                OKRES = obce_shp[obce_shp['kod_obce'] == intobecid]['nazev_okre'].iloc[0]
+                output_txt = output_txt + (DATE + " - " + OBEC + " (" + OKRES + ")\n")
+
+            # Clear existing content before inserting new content
+            text_widget.config(state=tk.NORMAL)
+            text_widget.delete(1.0, tk.END)
+            text_widget.insert(tk.END, output_txt)
+            text_widget.config(state=tk.DISABLED)
+
+        date_picker_root.protocol("WM_DELETE_WINDOW", date_picker_root.destroy)
+
+    # Separator between buttons
+    separator = ttk.Separator(root2, orient="horizontal")
+    separator.pack(fill="x", pady=(screen_height / 1080) * 10)
+
+    # Frame for the top part of the layout
+    top_frame = tk.Frame(root2)
+    top_frame.pack(side='top')
+
+    # Load the PNG image for button1
+    icon_image1_path = "files/statistics_icon.png"  # path to PNG icon for button1
+    icon_image1 = Image.open(icon_image1_path)
+    icon_image1 = icon_image1.resize((50, 50), Image.LANCZOS)  # size
+    icon_image1 = ImageTk.PhotoImage(icon_image1)
+
+    # button with the PNG icon for button1
+    buttonstat = tk.Button(top_frame, image=icon_image1, command=statistics, bd=0)
+    buttonstat.pack(side='left', padx=(screen_width / 1920) * 10)
+    buttonstat['state'] = 'disabled'
+
+    # Load the PNG image for button
+    image_path = "files/dateicon.png"  # path to PNG icon for button
+    icon_image = Image.open(image_path)
+    icon_image = icon_image.resize((50, 50), Image.LANCZOS)  # size
+    icon_image = ImageTk.PhotoImage(icon_image)
+
+    # button with the PNG icon for button
+    buttondate = tk.Button(top_frame, image=icon_image, command=date_selection, bd=0)
+    buttondate.pack(side='left', padx=(screen_width / 1920) * 10)
+    buttondate['state'] = 'disabled'
+
+    # Frame for the bottom part of the layout
+    bottom_frame = tk.Frame(root2)
+    bottom_frame.pack(side='top')
 
     # protocol for actually quiting the app upon clicking on X
     root2.protocol("WM_DELETE_WINDOW", quit_app)
