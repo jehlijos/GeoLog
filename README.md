@@ -29,7 +29,15 @@ By clicking on the green button in settings panel, new panel will appear, where 
 based on region and district where it lays. You can also choose a day of visiting. <br>
 ![By clicking on the green button in settings panel, new panel will appear, where you can add visited municipality](readme_files/6.png) <br><br>
 By clicking on the orange button in settings panel, new panel will appear, where you can remove visited municipality. <br>
-![By clicking on the green button in settings panel, new panel will appear, where you can add visited municipality](readme_files/7.png)
-
-
-
+![By clicking on the green button in settings panel, new panel will appear, where you can add visited municipality](readme_files/7.png) <br><br>
+By clicking on the light green button in settings panel, new panel will appear, where you can load GPX file from Stopař module made by Mapy.cz or any other <br>
+![By clicking on the light green button in settings panel, new panel will appear, where you can load GPX file from Stopař module made by Mapy.cz or any other](readme_files/8.png) <br><br>
+In this window you can find your GPX file by pressing the grey "Načti soubor" button. <br>
+![In this window you can find your GPX file by pressing the grey "Načti soubor" button.](readme_files/9.png) <br><br>
+Upon selecting your file, you can confirm your selection by clicking the light green button below and add municipalities that you have visited. <br>
+![Upon selecting your file, you can confirm your selection by clicking the light green button below and add municipalities that you have visited.](readme_files/10.png) <br><br>
+You can enter date selection window by pressing the calendar icon.<br>
+![You can enter date selection window by pressing the calendar icon.](readme_files/11.png) <br><br>
+Insert range of dates from you want to filter your visited municipalities and confirm your selection by button below.<br>
+You will be able to see your visited municipalities with dates in text window below.<br>
+![Insert range of dates from you want to filter your visited municipalities and confirm your selection by button below.](readme_files/12.png)
