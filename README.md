@@ -7,6 +7,9 @@
 - User account selection, creation, and deletion as tables in a local database <br>
 - Manual addition and deletion of visited municipalities <br>
 - Support for adding municipalities based on coordinates from the output of the Stopař (tracking module) feature from Mapy.cz (GPX file) <br> <br>
+- Visited municipalities filtering based on date of visiting <br>
+- Statistics of visited municipalities in state, regions and districts <br>
+- Support for all basic windows resolutions <br>
 
 ## Used Data  <br>
 - Spatial data - [ArcČR 4.1](https://www.arcdata.cz/cs-cz/produkty/data/arccr)
