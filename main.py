@@ -1,3 +1,4 @@
+import itertools
 import sys
 import tkinter as tk
 from tkinter import Toplevel, Label, ttk
@@ -15,6 +16,7 @@ import gpxpy
 from pyproj import Transformer
 from shapely.geometry import Point
 from PIL import Image, ImageTk
+from tkinter import Frame, Canvas, Scrollbar
 
 # Loading time is quite long while reploting, so I added a loading screen
 # matplotlib might not be ideal for showing spatial data, but it works
@@ -28,6 +30,8 @@ locale.setlocale(locale.LC_TIME, 'cs_CZ')
 
 # Filter out UserWarnings (about empty geometries)
 warnings.filterwarnings("ignore", category=UserWarning)
+# Filter out UserWarnings (about a lot of graphs)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 def print_file_contents(filename):
@@ -297,6 +301,10 @@ def main():
     stoparFILE = None
     global date_picker_root
     date_picker_root = None
+    global root_stat
+    root_stat = None
+    global root_stat2
+    root_statOKR = None
 
     # Declare combo_var and user as a global variable so that it can be accessed in other functions
     global combo_var_user
@@ -347,12 +355,20 @@ def main():
 
     ######################### SETTINGS PANEL #########################
     root2 = tk.Toplevel(root)
-    if screen_width / screen_height > 1.6:
+    print(screen_width)
+    print(screen_height)
+    # Window size for different screen sizes - this could be done better, but it takes a lot of time to test :(
+    if 1.6 < screen_width / screen_height < 1.7 or screen_height == 1080:
         root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.52))}")
+        print("1")
+    elif screen_width == 1128:
+        root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.85))}")
+        print("2")
     else:
         root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.7))}")
-
+        print("3")
     root2.title("GeoLog - nastavení")
+    # using predefined theme - https://github.com/rdbende/Azure-ttk-theme/
     root2.tk.call("source", "files/azure.tcl")
     root2.tk.call("set_theme", "light")
     root2.iconbitmap("files/ico.ico")
@@ -366,6 +382,7 @@ def main():
     combo_var_kraje = tk.StringVar(root2)
     combo_var_kraje.set("--vyber kraj--")  # Default text in the combobox
 
+    # Get the list of kraje names from shapefile
     kraje_nazvy = kraje_shp['nazev'].unique()
     kraje_nazvy = ['Celá ČR'] + list(kraje_nazvy)
 
@@ -505,6 +522,7 @@ def main():
 
         ax.set_axis_off()
 
+        # Create a FigureCanvasTkAgg to plot on
         canvas = FigureCanvasTkAgg(fig, master=root)
         canvas_widget = canvas.get_tk_widget()
         canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -663,7 +681,7 @@ def main():
 
     def existing_user_selected(event):
         """
-        Update the global user variable and enable buttons 1,2,3.
+        Update the global user variable and enable buttons 1,2,3, Statistics and Date Selecton.
         This function is bound to the <<ComboboxSelected>> event.
         """
         global user
@@ -673,7 +691,7 @@ def main():
         user_label.config(text="Uživatel:  " + user)
         print("uzivatel zmenen: " + user)
 
-        # Enable buttons 1,2,3
+        # Enable buttons 1,2,3, Statistics and Date Selecton.
         button1.config(state="normal")
         button2.config(state="normal")
         button3.config(state="normal")
@@ -682,7 +700,7 @@ def main():
 
         REplot = 1
         re_plot()
-
+        # Leave only Settings panel and map on the screen
         root2.update()
         root3.destroy()
 
@@ -705,6 +723,7 @@ def main():
         root3.destroy()
         removeuserpanelroot.destroy()
 
+        # Disable buttons 1,2,3, Statistics and Date Selecton.
         buttondate['state'] = 'disabled'
         button1['state'] = 'disabled'
         button2['state'] = 'disabled'
@@ -871,7 +890,12 @@ def main():
                 pass
             # Window creation
         add_obec_root = tk.Tk()
-        add_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.48))}")
+        if 1.6 < screen_width / screen_height < 1.7 or screen_height == 1080:
+            add_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.48))}")
+        elif screen_width == 1128 or screen_width == 1280:
+            add_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.75))}")
+        else:
+            add_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.75))}")
         add_obec_root.title("GeoLog - přidej obec")
         add_obec_root.tk.call("source", "files/azure.tcl")
         add_obec_root.tk.call("set_theme", "light")
@@ -1042,7 +1066,12 @@ def main():
                 pass
         # Window creation
         stopar_root = tk.Tk()
-        stopar_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.20))}")
+        if 1.6 < screen_width / screen_height < 1.7 or screen_height == 1080:
+            stopar_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.20))}")
+        elif screen_width == 1128:
+            stopar_root.geometry(f"{(int(screen_width * 0.65))}x{(int(screen_height * 0.30))}")
+        else:
+            stopar_root.geometry(f"{(int(screen_width * 0.65))}x{(int(screen_height * 0.30))}")
         stopar_root.title("GeoLog - načti soubor - Stopař")
         stopar_root.tk.call("source", "files/azure.tcl")
         stopar_root.tk.call("set_theme", "light")
@@ -1185,6 +1214,7 @@ def main():
                                        width=15)
         button_startStopar.pack(padx=(screen_width / 1920) * 20)
 
+        # empty label to show errors
         label_StoparError = Label(stopar_root, text=" ", font=desc_font, fg="red")
         label_StoparError.pack(pady=(screen_height / 1080) * 5)  # show description
 
@@ -1210,7 +1240,10 @@ def main():
                 pass
         # Window creation
         remove_obec_root = tk.Tk()
-        remove_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
+        if screen_width / screen_height > 1.6:
+            remove_obec_root.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.25))}")
+        else:
+            remove_obec_root.geometry(f"{(int(screen_width * 0.55))}x{(int(screen_height * 0.25))}")
         remove_obec_root.title("GeoLog - odeber obec")
         remove_obec_root.tk.call("source", "files/azure.tcl")
         remove_obec_root.tk.call("set_theme", "light")
@@ -1316,7 +1349,338 @@ def main():
     button3.pack(padx=(screen_width / 1920) * 5)
 
     def statistics():
-        print("statistics")
+        """
+        Create a new window to show pie charts with whole state statistics and region statistics.
+        Shows region statistics in a canvas with a scrollbar.
+        Shows button to open a new window with statistics in selected okreses.
+        """
+        okres_names = okresy_shp['Název_okr'].unique()
+        global root_statOKR
+
+        def reopen_stats():
+            """
+            Reopen the statistics window with kraje.
+            """
+            global root_statOKR
+            try:
+                root_statOKR.destroy()
+            except:
+                pass
+            statistics()
+
+        def okr_stats():
+            """
+            Create a new window with a combobox to select an okres.
+            Upon selecting an okres, the percentage of visited obce in the okres will be calculated.
+            A pie chart will be created to show the percentage of visited obce in the okres in new widow.
+            Shows 3 most visited okreses with precentages in pie graphs.
+            :return:
+            """
+            global root_statOKR
+            try:
+                root_stat.destroy()
+            except:
+                pass
+
+            root_statOKR = tk.Toplevel()
+            if 1.6 < screen_width / screen_height < 1.7 or screen_height == 1080:
+                root_statOKR.geometry(f"{(screen_width - 200)}x{(screen_height - 200)}")
+            elif screen_width == 1128:
+                root_statOKR.geometry(f"{(screen_width - 200)}x{(screen_height)}")
+            else:
+                root_statOKR.geometry(f"{(screen_width - 200)}x{(screen_height)}")
+
+            root_statOKR.title("GeoLog - Statistika v okresech")
+            root_statOKR.iconbitmap("files/ico.ico")
+            root_statOKR.resizable(False, False)
+
+            Label(root_statOKR, text="Statistika v okresech", font=("Raleway", 20)).pack(pady=(screen_height / 1080) *
+                                                                                              10)
+            okrStatOKR = ttk.Button(root_statOKR, text="Zpět", command=reopen_stats)
+            okrStatOKR.pack()
+
+            Label(root_statOKR, text="Vyber jiný okres:", font=("Raleway", 12)).pack(pady=(screen_height / 1080) *
+                                                                                          2)
+
+            def okr_stats2(event):
+                """
+                Create a new window with a pie chart to show the percentage of visited obce in the selected okres.
+                """
+
+                global combo_var_okresySTAT
+                okr = combo_var_okresySTAT.get()
+                # Select all obecIDs from shpfile for okr
+                okr_obecIDs = obce_shp[obce_shp['nazev_okre'] == okr]['kod_obce'].unique()
+
+                # Pick the obecIDs from the database that are in the selected okres
+                okr_obecIDs_db = cursor.execute(
+                    f"SELECT obecID FROM {user} WHERE obecID IN ({','.join(map(str, okr_obecIDs))})")
+                okr_obecIDs_db = okr_obecIDs_db.fetchall()
+                percentage = round((len(okr_obecIDs_db) / len(okr_obecIDs)) * 100, 2)
+
+                root_STAT_okr_Selection = tk.Toplevel()
+                root_STAT_okr_Selection.geometry(f"{(int(screen_height * 0.6))}x{(int(screen_height * 0.4))}")
+                root_STAT_okr_Selection.title("GeoLog - Statistika vybraného okresu")
+                root_STAT_okr_Selection.iconbitmap("files/ico.ico")
+                root_STAT_okr_Selection.resizable(False, False)
+
+                # Create a pie chart graph for the percentage of visited obce in the selected okres
+                def create_pie_chart(value, title):
+                    colors = ['red', '#F9FCDD']
+                    fig, ax = plt.subplots()
+                    percentages = [value, 100 - value]
+                    ax.pie(percentages, autopct='%1.2f%%', startangle=90, colors=colors)
+                    ax.axis('equal')
+                    ax.set_title(title)
+
+                    return fig
+
+                print("Okres:", okr)
+                print("Procento navštívenosti[%]:", percentage)
+                fig = create_pie_chart(percentage, f"{okr}")
+                fig.set_size_inches(3, 3)
+
+                # Embed the chart in Tkinter using place method
+                canvas = FigureCanvasTkAgg(fig, master=root_STAT_okr_Selection)
+                canvas_widget = canvas.get_tk_widget()
+                canvas_widget.pack(side=tk.TOP, fill=tk.BOTH)
+
+                root_STAT_okr_Selection.protocol("WM_DELETE_WINDOW", root_STAT_okr_Selection.destroy)
+
+            # Combobox
+            okresy_names_edit = list(okres_names)
+
+            global combo_var_okresySTAT
+            combo_var_okresySTAT = tk.StringVar(root_statOKR)
+            combo_var_okresySTAT.set("--vyber okres--")  # Default text in the combobox
+            combo_box_okresySTAT = ttk.Combobox(root_statOKR, textvariable=combo_var_okresySTAT,
+                                                values=okresy_names_edit)
+            combo_box_okresySTAT.pack(pady=(screen_height / 1080) * 5)
+            combo_box_okresySTAT['state'] = 'readonly'
+
+            combo_box_okresySTAT.bind("<<ComboboxSelected>>", okr_stats2)
+
+            # Separator between buttons
+            separator = ttk.Separator(root_statOKR, orient="horizontal")
+            separator.pack(fill="x", pady=(screen_height / 1080) * 10)
+
+            # Select all obecIDs from shpfile for each okres
+            okres_obecIDs = {}
+            for okres_name in okres_names:
+                okres_obecIDs[okres_name] = obce_shp[obce_shp['nazev_okre'] == okres_name]['kod_obce'].unique()
+
+            # Create a new dictionary to store the percentage of visited obce in each okres
+            okres_length = {}
+            okres_percentage = {}
+
+            for okres_name, okres_obecIDs_value in okres_obecIDs.items():
+                okres_length[okres_name] = len(okres_obecIDs_value)
+
+                okres_obecIDs_db = cursor.execute(
+                    f"SELECT obecID FROM {user} WHERE obecID IN ({','.join(map(str, okres_obecIDs_value))})")
+                if okres_length[okres_name] == 0:
+                    okres_percentage[okres_name] = 0  # Set percentage to 0 if denominator is zero (Prague?)
+                else:
+                    okres_percentage[okres_name] = round(
+                        (len(okres_obecIDs_db.fetchall()) / okres_length[okres_name]) * 100, 3)
+
+            # Select 3 highest values from okres_percentage and plot them in a 3 pie charts
+            okres_percentage = dict(sorted(okres_percentage.items(), key=lambda item: item[1], reverse=True))
+            okres_percentage = dict(itertools.islice(okres_percentage.items(), 3))
+            print(okres_percentage)
+            Label(root_statOKR, text="Nejnavštěvovanější okresy:", font=("Raleway", 12)).pack()
+
+            # Create 3 pie chart graphs for the 3 values in okres_percentage in a row
+            def create_pie_chart(value, title):
+                colors = ['red', '#F9FCDD']
+                fig, ax = plt.subplots()
+                percentages = [value, 100 - value]
+                ax.pie(percentages, autopct='%1.1f%%', startangle=90, colors=colors)
+                ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+                ax.set_title(title)
+                return fig
+
+            # Create pie charts for each value in okres_percentage
+            for idx, (okres_name, value) in enumerate(okres_percentage.items()):
+                fig = create_pie_chart(value, f"{okres_name}")
+                # Edit plot size for resolution
+                if screen_width < 1920:
+                    fig.set_size_inches(1, 1)
+                else:
+                    fig.set_size_inches(3, 3)
+                # Edit pie chart label size for resolution
+                if screen_width < 1920:
+                    plt.setp(fig.axes[0].texts, size=8)
+                    # Also edit the title size
+                    fig.axes[0].title.set_size(8)
+
+                # Embed the chart in Tkinter using place method
+                canvas = FigureCanvasTkAgg(fig, master=root_statOKR)
+                canvas_widget = canvas.get_tk_widget()
+                # Make the canvas larger for resolution
+                if screen_width < 1920:
+                    canvas_widget.place(relx=(idx + 1) * 0.25, rely=0.5, anchor="center", y=-0, width=150, height=150)
+                if 1920 > screen_width >= 1280:
+                    canvas_widget.place(relx=(idx + 1) * 0.25, rely=0.5, anchor="center", y=-40, width=250, height=250)
+                else:
+                    canvas_widget.place(relx=(idx + 1) * 0.25, rely=0.5, anchor="center", y=-40)
+
+                root_statOKR.protocol("WM_DELETE_WINDOW", root_statOKR.destroy)
+
+        global root_stat
+        if root_stat is not None:
+            try:
+                root_stat.destroy()
+            except:
+                pass
+        root_stat = tk.Tk()
+        if 1.6 < screen_width / screen_height < 1.7 or screen_height == 1080:
+            root_stat.geometry(f"{(screen_width - 200)}x{(screen_height - 200)}")
+        elif screen_width == 1128:
+            root_stat.geometry(f"{(screen_width - 200)}x{(screen_height)}")
+        else:
+            root_stat.geometry(f"{(screen_width - 200)}x{(screen_height)}")
+        root_stat.title("GeoLog - Statistika")  # Region and whole state statistics window creation
+        root_stat.iconbitmap("files/ico.ico")
+        root_stat.resizable(False, False)
+        root_stat.tk.call("source", "files/azure.tcl")
+        root_stat.tk.call("set_theme", "light")
+
+        Label(root_stat, text="Statistika", font=("Raleway", 20)).pack(pady=(screen_height / 1080) * 10)
+
+        okrStat = ttk.Button(root_stat, text="Statistika v okresech", command=okr_stats)
+        okrStat.pack()
+
+        # Separator between buttons
+        separator = ttk.Separator(root_stat, orient="horizontal")
+        separator.pack(fill="x", pady=(screen_height / 1080) * 10)
+
+        # Select all obecIDs from database
+        obecIDs = cursor.execute("SELECT obecID FROM " + user)
+        obecIDs = len(obecIDs.fetchall())
+        obecIDs_shp = len(obce_shp['kod_obce'].unique())
+        All_obce_percentage = round((obecIDs / obecIDs_shp) * 100, 3)
+        fig, ax = plt.subplots()
+
+        # Edit plot size
+        if screen_width < 1920:
+            fig.set_size_inches(2, 2)
+            # Edit pie chart label size
+            plt.setp(fig.axes[0].texts, size=8)
+            # Also edit the title size
+            fig.axes[0].title.set_size(8)
+        else:
+            fig.set_size_inches(3, 3)
+
+        colors = ['red', '#F9FCDD']
+
+        # Plot the pie chart with specified colors
+        wedges, texts, autotexts = ax.pie([All_obce_percentage, 100 - All_obce_percentage],
+                                          labels=['', ''],
+                                          autopct='', startangle=90, colors=colors)
+
+        # Add annotation for 'Navštívené obce' text and percentage
+        if screen_width < 1920:
+            ax.annotate(f'Navštívené obce\n{All_obce_percentage:.3f}%',
+                        xy=(0.5, 0.5), xytext=(0, 0), textcoords='offset points',
+                        ha='center', va='center', fontsize=8, color='black')
+        else:
+            ax.annotate(f'Navštívené obce\n{All_obce_percentage:.3f}%',
+                        xy=(0.5, 0.5), xytext=(0, 0), textcoords='offset points',
+                        ha='center', va='center', fontsize=12, color='black', weight='bold')
+        ax.axis('equal')
+        ax.set_title("V celé ČR:")
+
+        # Select all obecIDS from shpfile for each kraj
+        region_names = ['Jihočeský kraj', 'Jihomoravský kraj', 'Kraj Vysočina', 'Královéhradecký kraj',
+                        'Liberecký kraj', 'Moravskoslezský kraj', 'Olomoucký kraj', 'Pardubický kraj',
+                        'Plzeňský kraj', 'Středočeský kraj', 'Ústecký kraj', 'Zlínský kraj']
+
+        region_percentage = {}
+
+        # Create a new dictionary to store the percentage of visited obce in each region
+        for region_name in region_names:
+            region_obecIDs = obce_shp[obce_shp['nazev_kraj'] == region_name]['kod_obce'].unique()
+            region_obecIDs_db = cursor.execute(
+                f"SELECT obecID FROM {user} WHERE obecID IN ({','.join(map(str, region_obecIDs))})")
+            region_length = len(region_obecIDs)
+            region_percentage[region_name] = round((len(region_obecIDs_db.fetchall()) / region_length) * 100, 3)
+
+        canvas = FigureCanvasTkAgg(fig, master=root_stat)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        # Separator between buttons
+        separator = ttk.Separator(root_stat, orient="horizontal")
+        separator.pack(fill="x", pady=(screen_height / 1080) * 10)
+        Label(root_stat, text="Statistika krajů:", font=("Raleway", 12)).pack(pady=(screen_height / 1080) * 10)
+
+        # Create a canvas with a scrollbar
+        canvas_frame = Frame(root_stat)
+        canvas_frame.pack(side="top", fill="both", expand=True)
+
+        canvas = Canvas(canvas_frame)
+        scrollbar = Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Create a frame inside the canvas to hold the graphs
+        frame_for_graphs = Frame(canvas)
+        canvas.create_window((0, 0), window=frame_for_graphs, anchor="nw")
+
+        # Counter for arranging graphs in rows of three
+        graph_counter = 0
+        if screen_width < 1920:
+            num_columns = 2
+        else:
+            num_columns = 5
+        row_counter = 0
+
+        # Iterate over the region_percentage dictionary and create pie charts
+        for region_name, region_percentage_value in region_percentage.items():
+            # Create a new figure for each region
+            fig_region, ax_region = plt.subplots(figsize=(2.4, 2.4))  # Adjust the size as needed
+
+            # Create a new canvas for each region
+            canvas_region = FigureCanvasTkAgg(fig_region, master=frame_for_graphs)
+            canvas_region.draw()
+
+            # Plot the pie chart with specified colors
+            wedges, texts, autotexts = ax_region.pie([region_percentage_value, 100 - region_percentage_value],
+                                                     labels=['', ''],
+                                                     autopct='', startangle=90, colors=colors)
+            words = region_name.split()
+            first_word = words[0]
+            second_word = words[1]
+
+            # Add annotation for 'Navštívené obce' text and percentage and put them in the center
+            ax_region.annotate(f'{first_word}\n{second_word}\n{region_percentage_value:.3f}%',
+                               xy=(0.2, 0.2), xytext=(0, 0), textcoords='offset points',
+                               ha='center', va='center', fontsize=12, color='black', weight='bold')
+
+            ax_region.axis('equal')
+            ax_region.set_title("V kraji:")
+
+            row_position = row_counter
+            col_position = graph_counter % num_columns
+
+            # Pack the canvas based on the calculated positions
+            canvas_region.get_tk_widget().grid(row=row_position, column=col_position, padx=10, sticky="nsew")
+
+            # Increment the graph counter
+            graph_counter += 1
+
+            # Check if three graphs have been displayed in a row, then start a new line
+            if graph_counter % num_columns == 0:
+                # Increment the row counter
+                row_counter += 1
+
+        # Update the scroll region of the canvas
+        frame_for_graphs.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+        root_stat.protocol("WM_DELETE_WINDOW", root_stat.destroy)
 
     def date_selection():
         """
