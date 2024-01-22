@@ -1149,24 +1149,25 @@ def main():
                 # Select ObecID based on the coordinates
                 selected_obecIDs = []
                 for i in range(len(coordinates[0])):
-                    selected_obecIDs.append(
-                        obce_shp[obce_shp['geometry'].contains(Point(coordinates[0][i], coordinates[1][i]))][
-                            'kod_obce'].iloc[0])
-
+                    try:
+                        selected_obecIDs.append(
+                            obce_shp[obce_shp['geometry'].contains(Point(coordinates[0][i], coordinates[1][i]))][
+                                'kod_obce'].iloc[0])
+                    except:
+                        print("bod mimo ČR")
+                        continue
                 # Retrieve first date for each obecID from GPX file
                 dates = []
                 for track in gpx.tracks:
                     for segment in track.segments:
                         for point in segment.points:
                             dates.append(point.time)
-                print(dates)
 
                 # select position index of first occurence of each unique obecID
                 occurences = [0]
                 for i in range(1, len(selected_obecIDs)):
                     if selected_obecIDs[i] != selected_obecIDs[i - 1]:
                         occurences.append(i)
-                print(occurences)
 
                 # select dates of first occurence of each unique obecID
                 dates = [dates[i] for i in occurences]
