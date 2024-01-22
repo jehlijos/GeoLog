@@ -51,4 +51,6 @@ Use the scrollbar on the right to see all regions or click the button to see dis
 ![Upon clicking the piechart button, window with statistics will appear.](readme_files/14.png) <br><br>
 Now you can see the three most visited districts. Select a district to show its statistics in a new window.<br>
 ![Now you can see the three most visited districts. Select a district to show its statistics in a new window.](readme_files/15.png)<br>
-![The new window.](readme_files/16.png)
+![The new window.](readme_files/16.png)<br><br>
+Upon each addition or removal of a municipality or when a user is changed, the map window updates, and the visited municipalities in the currently selected zoom level are colored in red.<br>
+![Upon each addition or removal of a municipality or when a user is changed, the map window updates, and the visited municipalities in the currently selected zoom level are colored in red.](readme_files/17.png)
