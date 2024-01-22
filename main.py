@@ -355,18 +355,13 @@ def main():
 
     ######################### SETTINGS PANEL #########################
     root2 = tk.Toplevel(root)
-    print(screen_width)
-    print(screen_height)
     # Window size for different screen sizes - this could be done better, but it takes a lot of time to test :(
     if 1.6 < screen_width / screen_height < 1.7 or screen_height == 1080:
         root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.52))}")
-        print("1")
     elif screen_width == 1128:
         root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.85))}")
-        print("2")
     else:
         root2.geometry(f"{(int(screen_width * 0.25))}x{(int(screen_height * 0.7))}")
-        print("3")
     root2.title("GeoLog - nastavení")
     # using predefined theme - https://github.com/rdbende/Azure-ttk-theme/
     root2.tk.call("source", "files/azure.tcl")
