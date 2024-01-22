@@ -43,4 +43,12 @@ You can enter date selection window by pressing the calendar icon.<br>
 ![You can enter date selection window by pressing the calendar icon.](readme_files/11.png) <br><br>
 Insert range of dates from you want to filter your visited municipalities and confirm your selection by button below.<br>
 You will be able to see your visited municipalities with dates in text window below.<br>
-![Insert range of dates from you want to filter your visited municipalities and confirm your selection by button below.](readme_files/12.png)
+![Insert range of dates from you want to filter your visited municipalities and confirm your selection by button below.](readme_files/12.png) <br><br>
+Upon clicking the piechart button, window with statistics will appear.<br>
+![Upon clicking the piechart button, window with statistics will appear.](readme_files/13.png) <br><br>
+In this statistics window you can se percentages of visited municipalities in the Republic and in its regions.<br>
+Use the scrollbar on the right to see all regions or click the button to see district statistic. <br>
+![Upon clicking the piechart button, window with statistics will appear.](readme_files/14.png) <br><br>
+Now you can see the three most visited districts. Select a district to show its statistics in a new window.<br>
+![Now you can see the three most visited districts. Select a district to show its statistics in a new window.](readme_files/15.png)<br>
+![The new window.](readme_files/16.png)
