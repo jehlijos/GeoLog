@@ -53,4 +53,36 @@ Now you can see the three most visited districts. Select a district to show its 
 ![Now you can see the three most visited districts. Select a district to show its statistics in a new window.](readme_files/15.png)<br>
 ![The new window.](readme_files/16.png)<br><br>
 Upon each addition or removal of a municipality or when a user is changed, the map window updates, and the visited municipalities in the currently selected zoom level are colored in red.<br>
-![Upon each addition or removal of a municipality or when a user is changed, the map window updates, and the visited municipalities in the currently selected zoom level are colored in red.](readme_files/17.png)
+![Upon each addition or removal of a municipality or when a user is changed, the map window updates, and the visited municipalities in the currently selected zoom level are colored in red.](readme_files/17.png) <br> <br>
+## How to track your path with Mapy.cz phone app  <br>
+To record your route, you will need the mobile application "Mapy.cz". You can download it from Google Play or the App Store. After launching the application, go to the menu and click on the button "Spustit Stopaře" ("Start Hitchhiking").
+
+<img src="readme_files/ST1.png">
+
+To start recording, click on "START". If you want to reduce the size of the resulting file, use the sliders below. Your route is now being recorded.
+
+<img src="readme_files/ST2.png">
+
+Now you can track your route on your phone screen or lock your phone and continue your journey.
+
+<img src="readme_files/ST3.png">
+
+After completing your route, click on the pause button and then on the right arrow.
+
+<img src="readme_files/ST4.png">
+
+Now click on the "UKONČIT A ULOŽIT" ("FINISH AND SAVE") button; there is no need to configure anything on the next screen. Just click on the "DÁLE" ("NEXT") button.
+
+<img src="readme_files/ST5.png">
+
+Click on save, and then again in the main menu, open the "Moje mapy" ("My Maps") tab.
+
+<img src="readme_files/ST6.png">
+
+For your selected (last) route, click on the three dots and choose the option "Exportovat" ("Export").
+
+<img src="readme_files/ST7.png">
+
+Now the route file (.gpx) is saved on your device. After clicking on the "SDÍLET" ("SHARE") button, you can share this file with your computer.
+
+<img src="readme_files/ST8.png">
