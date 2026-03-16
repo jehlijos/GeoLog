@@ -1,0 +1,42 @@
+# Python cache a build
+__pycache__/
+*.py[cod]
+
+# Virtuální prostředí
+venv/
+.env/
+.venv/
+
+# Logy a cache
+*.log
+*.cache/
+*.tmp
+
+# Editor/IDE konfigurace
+.vscode/
+.idea/
+
+# OS specifické soubory
+Thumbs.db
+.DS_Store
+
+# Build a výstupy dokumentace
+help/build/
+help/build/html/
+help/build/*
+
+# QGIS/Plugin builder
+_PluginBuilderVýsledek.txt
+
+# Soubory generované pb_tool nebo make
+*.mo
+*.pot
+
+# Soubor pro označení testovacího buildu
+_testing_build.flag
+
+# Adresář se soubory testovacího buildu
+zip_build/
+
+# Ostatní
+*.bak

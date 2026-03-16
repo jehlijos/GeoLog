@@ -1,0 +1,8 @@
+
+FME_soubory:
+  - FME_nazev_souboru: "test2.fmw"
+    format_vystupu: "gpkg"
+    je_lokalni: true
+    volitelne_parametry:
+      - nazev_parametru: "PARAM1"
+        hodnota_parametru: "hodnota"

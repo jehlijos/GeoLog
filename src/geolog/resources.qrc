@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/topas_vyvoj_1" >
+        <file>ikona.svg</file>
+    </qresource>
+</RCC>

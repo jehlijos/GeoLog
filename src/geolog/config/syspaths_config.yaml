@@ -1,0 +1,16 @@
+
+Databaze:
+  db_engine: "oracle"
+  host: "sz00002phadb065.f00.isfd.cz"
+  databaze: "DEVSZG26.f00.isfd.cz"
+  port: 1521
+  jmeno: "LINO_TEST"
+  heslo: "Test1234"
+    
+QML_adresare:
+  lokalni_adresar: "qml"
+  sdilena_slozka: "Y:/13-NT/03-OGIS/06-Ukoly/testovací_data_TOPAS/QML"
+
+FME_adresare:
+  lokalni_adresar: "FME"
+  sdilena_slozka: "Y:/13-NT/03-OGIS/06-Ukoly/testovací_data_TOPAS/FME"

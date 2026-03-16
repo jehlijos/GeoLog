@@ -1,0 +1,3 @@
+"""
+Integrace s QGIS.
+"""

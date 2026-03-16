@@ -1,0 +1,16 @@
+
+{
+  "include": ["**/*.py"],
+  "ignore": ["**/*_dialog_base.py"],
+  "typeCheckingMode": "strict",
+  "executionEnvironments": [
+    {
+      "name": "QGIS",
+      "root": ".",
+      "extraPaths": [
+        "C:\\Program Files\\QGIS 3.40.14\\apps\\qgis-ltr\\python",
+        "c:\\Program Files\\QGIS 3.40.14\\apps\\qgis-ltr\\python\\plugins"
+      ]
+    }
+  ]
+}
