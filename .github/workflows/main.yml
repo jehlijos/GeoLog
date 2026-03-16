@@ -1,0 +1,60 @@
+name: Build Sphinx Docs and Publish to Wiki
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-wiki:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # Needed to push to wiki
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Sphinx + Markdown builder
+        run: |
+          pip install sphinx
+          pip install myst-parser
+          pip install sphinx-markdown-builder
+
+      - name: Build Sphinx docs (Markdown)
+        working-directory: docs
+        run: |
+          sphinx-build -b markdown . _build/wiki
+
+      - name: Checkout Wiki repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy generated docs to Wiki
+        run: |
+          rm -rf wiki/*
+          cp -R docs/_build/wiki/* wiki/
+
+      - name: Commit and push to Wiki
+        run: |
+          cd wiki
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No changes in Wiki."
+          else
+            git commit -m "Automated update of Sphinx-generated documentation"
+            git push
+          fi
+``
