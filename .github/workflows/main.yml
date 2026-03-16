@@ -57,4 +57,3 @@ jobs:
             git commit -m "Automated update of Sphinx-generated documentation"
             git push
           fi
-``
